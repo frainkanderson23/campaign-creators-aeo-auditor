@@ -6,11 +6,16 @@ import { checkRateLimit } from '@/lib/rateLimit';
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
+let supabase: SupabaseClient | undefined;
+
 function getSupabase(): SupabaseClient {
-  return createClient(
-    process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
-    process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
-  );
+  if (!supabase) {
+    supabase = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
+      process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
+    );
+  }
+  return supabase;
 }
 
 const startSchema = z.object({
@@ -35,7 +40,7 @@ const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
 function isBlockedHost(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/^\[|\]$/g, '');
 
-  if (h === 'localhost' || h === '127.0.0.1' || h === '::1' || h === '0.0.0.0') {
+  if (h === 'localhost' || h === '::1' || h === '0.0.0.0') {
     return true;
   }
 
@@ -43,22 +48,33 @@ function isBlockedHost(hostname: string): boolean {
     return true;
   }
 
-  // Reject any IPv6 (we deliberately block bracket IPv6 literals)
+  // Block all IPv6 (including bracketed literals)
   if (hostname.startsWith('[') || h.includes(':')) {
     return true;
   }
 
-  // Reject raw IPv4 literals (e.g. "8.8.8.8") and check private ranges
+  // Block IPv4 literals: loopback and RFC1918 private ranges
   if (IPV4_RE.test(h)) {
     const parts = h.split('.').map((p) => Number.parseInt(p, 10));
     if (parts.some((p) => Number.isNaN(p) || p < 0 || p > 255)) {
       return true;
     }
+    const [a, b] = parts;
+    if (a === 127) return true;
+    if (a === 10) return true;
+    if (a === 192 && b === 168) return true;
+    if (a === 172 && b >= 16 && b <= 31) return true;
+    // Catch-all: refuse raw IPv4 literals — public IPs should be reached via hostname.
     return true;
   }
 
-  // Reject purely numeric octet-style hostnames just in case
+  // Reject purely numeric octet-style hostnames
   if (/^\d+(\.\d+)*$/.test(h)) {
+    return true;
+  }
+
+  // Reject hostnames without a TLD (no dots, e.g. "intranet")
+  if (!h.includes('.')) {
     return true;
   }
 
@@ -78,93 +94,99 @@ function getClientIp(request: NextRequest): string {
   }
   const real = request.headers.get('x-real-ip');
   if (real) return real.trim();
-  return 'unknown';
+  return '127.0.0.1';
 }
 
 export async function POST(request: NextRequest): Promise<Response> {
   const ip = getClientIp(request);
 
   try {
-    const { limited } = await checkRateLimit(ip);
-    if (limited) {
-      return NextResponse.json(
-        { error: 'Rate limit exceeded', retryAfterSeconds: 3600 },
-        { status: 429, headers: { 'Retry-After': '3600' } },
-      );
-    }
-  } catch {
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
-  }
-
-  let body: unknown;
-  try {
-    body = await request.json();
-  } catch {
-    return NextResponse.json(
-      { error: 'Body must be valid JSON.' },
-      { status: 400 },
-    );
-  }
-
-  const parsed = startSchema.safeParse(body);
-  if (!parsed.success) {
-    const messages = parsed.error.issues.map((i) => i.message).join('; ');
-    return NextResponse.json({ error: messages }, { status: 400 });
-  }
-
-  let hostname: string;
-  try {
-    hostname = new URL(parsed.data.url).hostname;
-  } catch {
-    return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
-  }
-
-  if (isBlockedHost(hostname)) {
-    return NextResponse.json(
-      { error: 'Invalid URL: private/local addresses are not permitted' },
-      { status: 400 },
-    );
-  }
-
-  const normalizedUrl = normalizeUrl(parsed.data.url);
-
-  let auditId: string;
-  try {
-    const supabase = getSupabase();
-    const { data, error } = await supabase
-      .from('audit_requests')
-      .insert({
-        url: normalizedUrl,
-        status: 'pending',
-        created_at: new Date().toISOString(),
-      })
-      .select('id')
-      .single();
-
-    if (error || !data) {
+    try {
+      const { limited } = await checkRateLimit(ip);
+      if (limited) {
+        return NextResponse.json(
+          { error: 'Rate limit exceeded', retryAfterSeconds: 3600 },
+          { status: 429, headers: { 'Retry-After': '3600' } },
+        );
+      }
+    } catch {
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
-    auditId = data.id as string;
-  } catch {
-    return NextResponse.json({ error: 'Database error' }, { status: 500 });
-  }
 
-  void fetch(
-    new URL(
-      '/api/audit/crawl',
-      process.env.NEXT_PUBLIC_APP_URL!.trim(),
-    ).toString(),
-    {
-      method: 'POST',
-      headers: {
-        Authorization: 'Bearer ' + process.env.INTERNAL_CRAWLER_SECRET!.trim(),
-        'Content-Type': 'application/json',
+    let body: unknown;
+    try {
+      body = await request.json();
+    } catch {
+      return NextResponse.json(
+        { error: 'Body must be valid JSON.' },
+        { status: 400 },
+      );
+    }
+
+    const parsed = startSchema.safeParse(body);
+    if (!parsed.success) {
+      const messages = parsed.error.issues.map((i) => i.message).join('; ');
+      return NextResponse.json({ error: messages }, { status: 400 });
+    }
+
+    let hostname: string;
+    try {
+      hostname = new URL(parsed.data.url).hostname;
+    } catch {
+      return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
+    }
+
+    if (isBlockedHost(hostname)) {
+      return NextResponse.json(
+        { error: 'Invalid URL: private/local addresses are not permitted' },
+        { status: 400 },
+      );
+    }
+
+    const normalizedUrl = normalizeUrl(parsed.data.url);
+
+    let auditId: string;
+    try {
+      const { data, error } = await getSupabase()
+        .from('audit_requests')
+        .insert({
+          url: normalizedUrl,
+          status: 'pending',
+          ip_address: ip,
+        })
+        .select('id')
+        .single();
+
+      if (error || !data) {
+        return NextResponse.json({ error: 'Database error' }, { status: 500 });
+      }
+      auditId = data.id as string;
+    } catch {
+      return NextResponse.json({ error: 'Database error' }, { status: 500 });
+    }
+
+    void fetch(
+      new URL(
+        '/api/audit/crawl',
+        process.env.NEXT_PUBLIC_APP_URL!.trim(),
+      ).toString(),
+      {
+        method: 'POST',
+        headers: {
+          Authorization: 'Bearer ' + process.env.INTERNAL_CRAWLER_SECRET!.trim(),
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({ auditId, url: normalizedUrl }),
       },
-      body: JSON.stringify({ auditId, url: normalizedUrl }),
-    },
-  ).catch(() => {
-    // Fire-and-forget; failures are logged elsewhere by the crawler.
-  });
+    ).catch(() => {
+      // Fire-and-forget; crawler logs its own failures.
+    });
 
-  return NextResponse.json({ auditId }, { status: 201 });
+    return NextResponse.json({ auditId }, { status: 201 });
+  } catch {
+    return NextResponse.json(
+      { error: 'Internal server error' },
+      { status: 500 },
+    );
+  }
 }
