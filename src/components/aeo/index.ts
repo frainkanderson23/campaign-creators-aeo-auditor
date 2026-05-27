@@ -1,8 +1,5 @@
 export { AuditScoreCard } from './AuditScoreCard';
-export type {
-  AuditScoreCardProps,
-  AuditScoreCardFinding,
-} from './AuditScoreCard';
+export type { AuditScoreCardProps } from './AuditScoreCard';
 
 export { AuditHeroScore } from './AuditHeroScore';
 export type { AuditHeroScoreProps } from './AuditHeroScore';
@@ -18,5 +15,6 @@ export { AuditForm } from './AuditForm';
 export { AuditResultPage } from './AuditResultPage';
 export type {
   AuditResultPageProps,
-  AuditStatus,
+  AuditState,
+  CategoryScore,
 } from './AuditResultPage';

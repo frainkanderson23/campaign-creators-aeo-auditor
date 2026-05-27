@@ -6,8 +6,15 @@
   padding: 2rem 1.5rem;
   border: 1px solid var(--color-border);
   background-color: var(--color-background);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-xl);
   text-align: center;
+}
+
+.blurred {
+  filter: blur(8px);
+  opacity: 0.5;
+  pointer-events: none;
+  user-select: none;
 }
 
 .domain {
@@ -36,11 +43,3 @@
   color: #ffffff;
 }
 
-.interpretation {
-  font-family: var(--font-body);
-  font-size: 1rem;
-  color: var(--color-text-secondary);
-  max-width: 36rem;
-  margin: 0;
-  line-height: 1.5;
-}
