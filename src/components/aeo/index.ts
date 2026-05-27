@@ -12,3 +12,12 @@ export type { EmailGateOverlayProps } from './EmailGateOverlay';
 
 export { ConsultationCTA } from './ConsultationCTA';
 export type { ConsultationCTAProps } from './ConsultationCTA';
+
+export { AuditForm } from './AuditForm';
+export type { AuditFormProps } from './AuditForm';
+
+export { AuditResultPage } from './AuditResultPage';
+export type {
+  AuditResultPageProps,
+  AuditStatus,
+} from './AuditResultPage';
