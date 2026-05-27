@@ -1,10 +1,18 @@
 import type { Metadata } from 'next';
-import { Inter } from 'next/font/google';
+import { DM_Sans, Inter } from 'next/font/google';
 import './globals.css';
 
-const inter = Inter({
-  variable: '--font-inter',
+const dmSans = DM_Sans({
+  variable: '--font-display',
   subsets: ['latin'],
+  weight: ['400', '500', '700'],
+  display: 'swap',
+});
+
+const inter = Inter({
+  variable: '--font-body',
+  subsets: ['latin'],
+  weight: ['400', '500', '600'],
   display: 'swap',
 });
 
@@ -18,7 +26,10 @@ export default function RootLayout({
   children,
 }: Readonly<{ children: React.ReactNode }>) {
   return (
-    <html lang="en" className={`${inter.variable} h-full antialiased`}>
+    <html
+      lang="en"
+      className={`${dmSans.variable} ${inter.variable} h-full antialiased`}
+    >
       <body className="min-h-full flex flex-col">{children}</body>
     </html>
   );
