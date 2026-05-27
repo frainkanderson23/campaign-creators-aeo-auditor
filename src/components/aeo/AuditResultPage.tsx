@@ -1,170 +1,125 @@
 'use client';
 
-import { useCallback, useEffect, useRef, useState, type ReactNode } from 'react';
-import { Button } from '@/components/ui';
+import { useState } from 'react';
+import Link from 'next/link';
+import { AlertCircle, Loader2 } from 'lucide-react';
+import { EmptyState } from '@/components/ui';
+import { AuditHeroScore } from './AuditHeroScore';
+import { AuditScoreCard } from './AuditScoreCard';
+import { EmailGateOverlay } from './EmailGateOverlay';
+import { ConsultationCTA } from './ConsultationCTA';
 import styles from './AuditResultPage.module.css';
 
-const AUDIT_TIMEOUT_MS = 60_000;
-const POLL_INTERVAL_MS = 2_000;
+export type AuditState = 'loading' | 'failed' | 'preview' | 'unlocked';
 
-export type AuditStatus = 'processing' | 'complete' | 'error';
+export type CategoryScore = {
+  label: string;
+  score: number;
+  grade: string;
+  locked: boolean;
+};
 
 export interface AuditResultPageProps {
-  auditId: string;
-  domain?: string;
-  pollEndpoint?: (auditId: string) => string;
-  children?: ReactNode;
-  onRetry?: () => void;
-}
-
-interface FetchedAudit {
-  status: AuditStatus;
-  error?: string;
+  state: AuditState;
+  score: number;
+  grade: string;
+  domain: string;
+  categoryScores: CategoryScore[];
 }
 
 export function AuditResultPage({
-  auditId,
+  state: initialState,
+  score,
+  grade,
   domain,
-  pollEndpoint = (id) => `/api/audit/${id}`,
-  children,
-  onRetry,
+  categoryScores,
 }: AuditResultPageProps) {
-  const [status, setStatus] = useState<AuditStatus>('processing');
-  const [errorMessage, setErrorMessage] = useState<string | null>(null);
-  const [timedOut, setTimedOut] = useState(false);
-  const [attempt, setAttempt] = useState(0);
+  const [state, setState] = useState<AuditState>(initialState);
 
-  const cancelledRef = useRef(false);
-  const pollTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-  const timeoutTimerRef = useRef<ReturnType<typeof setTimeout> | null>(null);
-
-  const handleRetry = useCallback(() => {
-    setStatus('processing');
-    setErrorMessage(null);
-    setTimedOut(false);
-    setAttempt((n) => n + 1);
-    onRetry?.();
-  }, [onRetry]);
-
-  useEffect(() => {
-    cancelledRef.current = false;
-
-    function clearTimers() {
-      if (pollTimerRef.current) {
-        clearTimeout(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
-      if (timeoutTimerRef.current) {
-        clearTimeout(timeoutTimerRef.current);
-        timeoutTimerRef.current = null;
-      }
-    }
-
-    async function poll() {
-      try {
-        const res = await fetch(pollEndpoint(auditId), { cache: 'no-store' });
-        if (cancelledRef.current) return;
-
-        if (!res.ok) {
-          pollTimerRef.current = setTimeout(poll, POLL_INTERVAL_MS);
-          return;
-        }
-
-        const data = (await res.json()) as FetchedAudit;
-        if (cancelledRef.current) return;
-
-        if (data.status === 'complete') {
-          clearTimers();
-          setStatus('complete');
-          return;
-        }
-
-        if (data.status === 'error') {
-          clearTimers();
-          setStatus('error');
-          setErrorMessage(data.error ?? 'Audit failed.');
-          return;
-        }
-
-        pollTimerRef.current = setTimeout(poll, POLL_INTERVAL_MS);
-      } catch {
-        if (!cancelledRef.current) {
-          pollTimerRef.current = setTimeout(poll, POLL_INTERVAL_MS);
-        }
-      }
-    }
-
-    timeoutTimerRef.current = setTimeout(() => {
-      if (cancelledRef.current) return;
-      if (pollTimerRef.current) {
-        clearTimeout(pollTimerRef.current);
-        pollTimerRef.current = null;
-      }
-      setTimedOut(true);
-    }, AUDIT_TIMEOUT_MS);
-
-    poll();
-
-    return () => {
-      cancelledRef.current = true;
-      clearTimers();
-    };
-  }, [auditId, attempt, pollEndpoint]);
-
-  if (timedOut) {
+  if (state === 'loading') {
     return (
-      <section className={styles.state} aria-live="polite">
-        <h2 className={styles.title}>This is taking longer than expected</h2>
-        <p className={styles.subtitle}>
-          We haven&apos;t heard back about{' '}
-          <strong>{domain ?? 'your audit'}</strong> in over 60 seconds. You can
-          retry now.
-        </p>
-        <Button
-          type="button"
-          variant="primary"
-          onClick={handleRetry}
-          aria-label="Try Again"
-        >
-          Try Again
-        </Button>
-      </section>
+      <EmptyState
+        icon={<Loader2 className={styles.spin} width={28} height={28} aria-hidden />}
+        heading="Analyzing your site…"
+        body="This usually takes 20–30 seconds."
+      />
     );
   }
 
-  if (status === 'error') {
+  if (state === 'failed') {
     return (
-      <section className={styles.state} aria-live="polite">
-        <h2 className={styles.title}>Something went wrong</h2>
-        <p className={styles.subtitle}>
-          {errorMessage ?? 'We were unable to finish the audit.'}
-        </p>
-        <Button
-          type="button"
-          variant="primary"
-          onClick={handleRetry}
-          aria-label="Try Again"
-        >
-          Try Again
-        </Button>
-      </section>
+      <EmptyState
+        icon={
+          <AlertCircle
+            width={28}
+            height={28}
+            style={{ color: 'var(--grade-f)' }}
+            aria-hidden
+          />
+        }
+        heading="Audit Failed"
+        body="Something went wrong running your audit."
+        action={
+          <Link href="/" className={styles.tryAgain}>
+            Try Again
+          </Link>
+        }
+      />
     );
   }
 
-  if (status === 'processing') {
+  if (state === 'preview') {
     return (
-      <section className={styles.state} aria-live="polite">
-        <h2 className={styles.title}>
-          Auditing {domain ?? 'your site'}
-        </h2>
-        <p className={styles.subtitle}>
-          Running checks. This usually takes about 30 seconds.
-        </p>
-      </section>
+      <div className={styles.page}>
+        <AuditHeroScore
+          score={score}
+          grade={grade}
+          domain={domain}
+          locked={false}
+        />
+        <div className={styles.cardGrid}>
+          {categoryScores.map((cat) => (
+            <AuditScoreCard
+              key={cat.label}
+              label={cat.label}
+              score={cat.score}
+              grade={cat.grade}
+              locked
+            />
+          ))}
+        </div>
+        <EmailGateOverlay onUnlock={() => setState('unlocked')} />
+      </div>
     );
   }
 
-  return <>{children}</>;
+  return (
+    <div className={styles.page}>
+      <AuditHeroScore
+        score={score}
+        grade={grade}
+        domain={domain}
+        locked={false}
+      />
+      <div className={styles.cardGrid}>
+        {categoryScores.map((cat) => (
+          <AuditScoreCard
+            key={cat.label}
+            label={cat.label}
+            score={cat.score}
+            grade={cat.grade}
+            locked={false}
+          />
+        ))}
+      </div>
+      <ConsultationCTA
+        heading="Want expert help?"
+        body="Book a free 30-minute AEO strategy call with our team."
+        ctaLabel="Book a Free Call"
+        ctaHref="#"
+      />
+    </div>
+  );
 }
 
 export default AuditResultPage;

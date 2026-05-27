@@ -1,58 +1,74 @@
-import { LockIcon } from '@/components/ui';
+import { Lock } from 'lucide-react';
 import styles from './AuditScoreCard.module.css';
 
-export interface AuditScoreCardFinding {
-  label: string;
-  value: string;
-}
-
 export interface AuditScoreCardProps {
+  label: string;
+  score: number;
+  grade: string;
   locked?: boolean;
-  score?: number;
-  findings?: AuditScoreCardFinding[];
 }
 
-const DEFAULT_FINDINGS: AuditScoreCardFinding[] = [
-  { label: 'Schema Coverage', value: '40%' },
-  { label: 'Citation Signals', value: '3/10' },
-  { label: 'Authority Score', value: '58' },
-];
+function gradeColor(grade: string): string {
+  switch (grade.toUpperCase()) {
+    case 'A':
+      return 'var(--grade-a)';
+    case 'B':
+      return 'var(--grade-b)';
+    case 'C':
+      return 'var(--grade-c)';
+    case 'D':
+      return 'var(--grade-d)';
+    case 'F':
+      return 'var(--grade-f)';
+    default:
+      return 'var(--color-text-secondary)';
+  }
+}
 
 export function AuditScoreCard({
+  label,
+  score,
+  grade,
   locked = false,
-  score = 62,
-  findings = DEFAULT_FINDINGS,
 }: AuditScoreCardProps) {
+  const clamped = Math.max(0, Math.min(100, score));
+  const color = gradeColor(grade);
   const bodyClass = [styles.body, locked ? styles.blurred : '']
     .filter(Boolean)
     .join(' ');
 
   return (
-    <div className={styles.card}>
+    <article className={styles.card}>
       <div className={bodyClass} aria-hidden={locked ? true : undefined}>
-        <p className={styles.title}>AEO Score</p>
+        <header className={styles.header}>
+          <h3 className={styles.label}>{label}</h3>
+          <span
+            className={styles.badge}
+            style={{ backgroundColor: color }}
+            aria-label={`Grade ${grade}`}
+          >
+            {grade}
+          </span>
+        </header>
         <div className={styles.scoreRow}>
-          <span className={styles.score}>{score}</span>
+          <span className={styles.score}>{clamped}</span>
           <span className={styles.scoreMax}>/100</span>
         </div>
-        <ul className={styles.findings}>
-          {findings.map((f) => (
-            <li key={f.label} className={styles.findingRow}>
-              <span className={styles.findingLabel}>{f.label}</span>
-              <span className={styles.findingValue}>{f.value}</span>
-            </li>
-          ))}
-        </ul>
+        <div className={styles.barTrack} aria-hidden>
+          <div
+            className={styles.barFill}
+            style={{ width: `${clamped}%`, backgroundColor: color }}
+          />
+        </div>
       </div>
       {locked && (
         <div className={styles.overlay} role="status" aria-label="Locked">
           <span className={styles.overlayIcon}>
-            <LockIcon size={24} />
+            <Lock width={24} height={24} aria-hidden />
           </span>
-          <p className={styles.overlayText}>Unlock to view your full score</p>
         </div>
       )}
-    </div>
+    </article>
   );
 }
 
