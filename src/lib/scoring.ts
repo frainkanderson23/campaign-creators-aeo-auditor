@@ -1,4 +1,5 @@
 import type { CategoryScores, Signal } from '@/src/types/audit';
+import type { ScorerInput, ScoringResult } from '@/types/crawl';
 
 export function getGrade(score: number): string {
   if (score < 0 || score > 100) {
@@ -102,4 +103,138 @@ export function scoreFreshness(signals: Signal[]): number {
   }
   if (isTrue(findSignal(signals, 'has_publish_date_schema'))) score += 30;
   return cap(score);
+}
+
+const BOT_NAMES = ['GPTBot', 'ClaudeBot', 'Googlebot', 'Bingbot'] as const;
+
+export function robotsScore(input: ScorerInput): number {
+  const { robotsData } = input;
+  let allowedCount = 0;
+  for (const bot of BOT_NAMES) {
+    if (robotsData?.[bot]?.allowed) allowedCount += 1;
+  }
+  return cap(Math.round((allowedCount / BOT_NAMES.length) * 100));
+}
+
+export function sitemapScore(input: ScorerInput): number {
+  const count = input.sitemapUrls?.length ?? 0;
+  if (count === 0) return 0;
+  if (count >= 10) return 100;
+  if (count >= 5) return 80;
+  if (count >= 2) return 60;
+  return 40;
+}
+
+export function structuredDataScore(input: ScorerInput): number {
+  const pages = input.crawledPages ?? [];
+  if (pages.length === 0) return 0;
+  const pagesWithSchema = pages.filter(
+    (p) => Array.isArray(p.structuredData) && p.structuredData.length > 0,
+  ).length;
+  return cap(Math.round((pagesWithSchema / pages.length) * 100));
+}
+
+export function titleMetaScore(input: ScorerInput): number {
+  const pages = input.crawledPages ?? [];
+  if (pages.length === 0) return 0;
+  let total = 0;
+  for (const page of pages) {
+    let pageScore = 0;
+    if (page.title && page.title.trim().length > 0) pageScore += 50;
+    if (page.metaDescription && page.metaDescription.trim().length > 0) {
+      pageScore += 50;
+    }
+    total += pageScore;
+  }
+  return cap(Math.round(total / pages.length));
+}
+
+export function aeoScore(input: ScorerInput): number {
+  const pages = input.crawledPages ?? [];
+  if (pages.length === 0) return 0;
+  let total = 0;
+  for (const page of pages) {
+    let pageScore = 0;
+    if (page.h1 && page.h1.length > 0) pageScore += 25;
+    if (page.h2 && page.h2.length >= 2) pageScore += 25;
+    if (typeof page.wordCount === 'number' && page.wordCount >= 300) {
+      pageScore += 25;
+    } else if (typeof page.wordCount === 'number' && page.wordCount >= 150) {
+      pageScore += 12;
+    }
+    if (page.canonicalUrl && page.canonicalUrl.trim().length > 0) {
+      pageScore += 25;
+    }
+    total += pageScore;
+  }
+  return cap(Math.round(total / pages.length));
+}
+
+function buildRecommendations(
+  input: ScorerInput,
+  scores: Record<string, number>,
+): string[] {
+  const recs: string[] = [];
+
+  for (const bot of BOT_NAMES) {
+    if (!input.robotsData?.[bot]?.allowed) {
+      recs.push(`Allow ${bot} in robots.txt so AI crawlers can index your site.`);
+    }
+  }
+
+  if ((input.sitemapUrls?.length ?? 0) === 0) {
+    recs.push('Publish a sitemap.xml so crawlers can discover your pages.');
+  } else if (input.sitemapUrls.length < 5) {
+    recs.push('Expand your sitemap.xml to include more pages.');
+  }
+
+  if (scores.structuredData < 50) {
+    recs.push(
+      'Add JSON-LD structured data (Article, FAQPage, Organization) to more pages.',
+    );
+  }
+
+  if (scores.titleMeta < 80) {
+    recs.push('Ensure every page has a unique <title> and meta description.');
+  }
+
+  if (scores.aeo < 70) {
+    recs.push(
+      'Improve on-page structure: one H1 per page, multiple H2s, ≥300 words, and a canonical URL.',
+    );
+  }
+
+  return recs;
+}
+
+export function runAllScorers(input: ScorerInput): ScoringResult {
+  const scores: Record<string, number> = {
+    robots: robotsScore(input),
+    sitemap: sitemapScore(input),
+    structuredData: structuredDataScore(input),
+    titleMeta: titleMetaScore(input),
+    aeo: aeoScore(input),
+  };
+
+  const weights = {
+    robots: 0.2,
+    sitemap: 0.15,
+    structuredData: 0.25,
+    titleMeta: 0.2,
+    aeo: 0.2,
+  };
+
+  const overallScore = Math.round(
+    scores.robots * weights.robots +
+      scores.sitemap * weights.sitemap +
+      scores.structuredData * weights.structuredData +
+      scores.titleMeta * weights.titleMeta +
+      scores.aeo * weights.aeo,
+  );
+
+  return {
+    scores,
+    recommendations: buildRecommendations(input, scores),
+    overallScore,
+  };
 }
