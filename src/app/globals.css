@@ -4,28 +4,45 @@
   --background: #fafaf8;
   --foreground: #0f172a;
 
-  --color-primary: #2563EB;
-  --color-secondary: #6366F1;
-  --color-accent: #EFF6FF;
-  --color-background: #FFFFFF;
-  --color-text: #111827;
-  --color-text-secondary: #6B7280;
-  --color-border: #E5E7EB;
+  /* Primary palette */
+  --color-primary:          #2563EB;
+  --color-secondary:        #6366F1;
+  --color-accent:           #EFF6FF;
+  --color-background:       #FFFFFF;
+  --color-surface:          #F8FAFF;
+  --color-text:             #111827;
+  --color-text-secondary:   #6B7280;
+  --color-text-muted:       #9CA3AF;
+  --color-border:           #E5EBF5;
 
+  /* Grade tokens — data-viz ONLY, never in UI */
   --grade-a: #16A34A;
   --grade-b: #65A30D;
   --grade-c: #D97706;
   --grade-d: #EA580C;
   --grade-f: #DC2626;
 
-  --font-display: 'DM Sans', sans-serif;
-  --font-body: 'Inter', sans-serif;
+  /* Typography */
+  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
+  --font-body:    'Outfit', system-ui, sans-serif;
+  --font-mono:    'JetBrains Mono', ui-monospace, monospace;
 
-  --radius-sm: 0.25rem;
-  --radius-md: 0.375rem;
-  --radius-lg: 0.5rem;
-  --radius-xl: 0.75rem;
+  /* Border radii */
+  --radius-sm:   4px;
+  --radius-md:   6px;
+  --radius-lg:   10px;
+  --radius-xl:   14px;
   --radius-full: 9999px;
+
+  /* Shadows */
+  --shadow-sm:       0 1px 2px rgba(15, 23, 42, 0.04);
+  --shadow-hover:    0 4px 16px rgba(37, 99, 235, 0.08);
+  --shadow-elevated: 0 8px 32px rgba(37, 99, 235, 0.12);
+
+  /* Transitions */
+  --transition-fast:   120ms ease;
+  --transition-base:   150ms ease;
+  --transition-slow:   240ms ease;
 }
 
 @theme inline {
@@ -37,8 +54,10 @@
   --color-primary: var(--color-primary);
   --color-secondary: var(--color-secondary);
   --color-accent: var(--color-accent);
+  --color-surface: var(--color-surface);
   --color-text: var(--color-text);
   --color-text-secondary: var(--color-text-secondary);
+  --color-text-muted: var(--color-text-muted);
   --color-border: var(--color-border);
 
   --color-grade-a: var(--grade-a);
@@ -49,6 +68,7 @@
 
   --font-display: var(--font-display);
   --font-body: var(--font-body);
+  --font-mono: var(--font-mono);
 
   --radius-sm: var(--radius-sm);
   --radius-md: var(--radius-md);
@@ -70,8 +90,13 @@ body {
   background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 2rem;
-  box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+  padding: 1.5rem;
+  box-shadow: var(--shadow-sm);
+  transition: box-shadow var(--transition-base);
+}
+
+.card:hover {
+  box-shadow: var(--shadow-hover);
 }
 
 .input {
@@ -86,7 +111,7 @@ body {
   font-size: 0.9375rem;
   line-height: 1.5;
   outline: none;
-  transition: border-color 120ms ease, box-shadow 120ms ease;
+  transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 
 .input::placeholder {
@@ -114,7 +139,7 @@ body {
 .label {
   display: block;
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   font-weight: 500;
   color: var(--color-text);
   margin-bottom: 0.375rem;
@@ -127,13 +152,13 @@ body {
   gap: 0.5rem;
   font-family: var(--font-body);
   font-size: 0.9375rem;
-  font-weight: 500;
+  font-weight: 600;
   line-height: 1;
   padding: 0.75rem 1.25rem;
   border-radius: var(--radius-md);
   border: 1px solid transparent;
   cursor: pointer;
-  transition: background-color 120ms ease, border-color 120ms ease, opacity 120ms ease;
+  transition: background-color var(--transition-base), border-color var(--transition-base), color var(--transition-base), box-shadow var(--transition-base);
   outline: none;
 }
 
@@ -155,19 +180,30 @@ body {
   background: color-mix(in srgb, var(--color-primary) 88%, black);
 }
 
+.btn-cta {
+  background: var(--color-secondary);
+  color: #ffffff;
+  font-weight: 700;
+  padding: 0.875rem 2rem;
+}
+
+.btn-cta:hover:not(:disabled) {
+  background: color-mix(in srgb, var(--color-secondary) 88%, black);
+}
+
 .btn-block {
   width: 100%;
 }
 
 .form-error {
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--grade-f);
 }
 
 .form-success {
   font-family: var(--font-body);
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   color: var(--grade-a);
 }
 
@@ -177,7 +213,14 @@ body {
 
 .heading-display {
   font-family: var(--font-display);
-  font-weight: 600;
+  font-weight: 700;
   letter-spacing: -0.02em;
   color: var(--color-text);
+}
+
+.heading-mono {
+  font-family: var(--font-mono);
+  font-weight: 700;
+  letter-spacing: 0;
+  font-variant-numeric: tabular-nums;
 }

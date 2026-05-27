@@ -12,7 +12,7 @@
   align-items: center;
   justify-content: space-between;
   height: 100%;
-  max-width: 64rem;
+  max-width: 1120px;
   margin: 0 auto;
   padding: 0 1.5rem;
 }
@@ -59,25 +59,26 @@
   align-items: center;
   justify-content: center;
   gap: 0.5rem;
-  border: 1px solid transparent;
+  border: 1.5px solid var(--color-secondary);
   border-radius: var(--radius-md);
   font-family: var(--font-body);
-  font-weight: 500;
-  font-size: 0.9375rem;
+  font-weight: 600;
+  font-size: 0.875rem;
   line-height: 1.25rem;
-  padding: 0.625rem 1.125rem;
+  padding: 0.5rem 1rem;
   background-color: transparent;
-  color: var(--color-text);
+  color: var(--color-secondary);
   text-decoration: none;
   cursor: pointer;
   outline: none;
-  transition: background-color 120ms ease, border-color 120ms ease, color 120ms ease;
+  transition: all var(--transition-base);
 }
 
 .cta:hover {
-  background-color: var(--color-accent);
+  background-color: var(--color-secondary);
+  color: #ffffff;
 }
 
 .cta:focus-visible {
-  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-primary) 35%, transparent);
+  box-shadow: 0 0 0 3px color-mix(in srgb, var(--color-secondary) 35%, transparent);
 }
