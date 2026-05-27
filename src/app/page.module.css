@@ -1,0 +1,45 @@
+.hero {
+  flex: 1 1 auto;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  min-height: 100vh;
+  padding: 4rem 1.5rem;
+  background-color: var(--color-background);
+}
+
+.container {
+  width: 100%;
+  max-width: 36rem;
+  display: flex;
+  flex-direction: column;
+  align-items: stretch;
+  gap: 2rem;
+  text-align: center;
+}
+
+.heading {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-size: clamp(2rem, 4vw + 1rem, 3rem);
+  line-height: 1.1;
+  color: var(--color-text);
+  margin: 0;
+}
+
+.subtitle {
+  font-family: var(--font-body);
+  font-size: 1.125rem;
+  line-height: 1.6;
+  color: var(--color-text-secondary);
+  margin: 0;
+  max-width: 32rem;
+  align-self: center;
+}
+
+.formWrap {
+  width: 100%;
+  display: flex;
+  justify-content: center;
+}
