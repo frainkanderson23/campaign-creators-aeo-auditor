@@ -1,8 +1,8 @@
 'use client';
 
-import { useState } from 'react';
+import { useEffect, useState } from 'react';
 import Link from 'next/link';
-import { AlertCircle, Loader2 } from 'lucide-react';
+import { AlertCircle, Clock, Loader2 } from 'lucide-react';
 import { EmptyState } from '@/components/ui';
 import { AuditHeroScore } from './AuditHeroScore';
 import { AuditScoreCard } from './AuditScoreCard';
@@ -10,7 +10,12 @@ import { EmailGateOverlay } from './EmailGateOverlay';
 import { ConsultationCTA } from './ConsultationCTA';
 import styles from './AuditResultPage.module.css';
 
-export type AuditState = 'loading' | 'failed' | 'preview' | 'unlocked';
+export type AuditState =
+  | 'loading'
+  | 'failed'
+  | 'timeout'
+  | 'preview'
+  | 'unlocked';
 
 export type CategoryScore = {
   label: string;
@@ -27,6 +32,8 @@ export interface AuditResultPageProps {
   categoryScores: CategoryScore[];
 }
 
+const POLL_TIMEOUT_MS = 60_000;
+
 export function AuditResultPage({
   state: initialState,
   score,
@@ -36,12 +43,50 @@ export function AuditResultPage({
 }: AuditResultPageProps) {
   const [state, setState] = useState<AuditState>(initialState);
 
+  useEffect(() => {
+    if (state !== 'loading') return;
+    const timer = window.setTimeout(() => {
+      setState('timeout');
+    }, POLL_TIMEOUT_MS);
+    return () => window.clearTimeout(timer);
+  }, [state]);
+
+  function handleRetry() {
+    setState('loading');
+  }
+
   if (state === 'loading') {
     return (
       <EmptyState
         icon={<Loader2 className={styles.spin} width={28} height={28} aria-hidden />}
         heading="Analyzing your site…"
         body="This usually takes 20–30 seconds."
+      />
+    );
+  }
+
+  if (state === 'timeout') {
+    return (
+      <EmptyState
+        icon={
+          <Clock
+            width={28}
+            height={28}
+            style={{ color: 'var(--color-primary)' }}
+            aria-hidden
+          />
+        }
+        heading="This is taking longer than expected"
+        body="Your audit timed out after 60 seconds. Please try again."
+        action={
+          <Link
+            href="/"
+            className={styles.tryAgain}
+            onClick={handleRetry}
+          >
+            Try Again
+          </Link>
+        }
       />
     );
   }
