@@ -153,6 +153,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           url: normalizedUrl,
           status: 'pending',
           ip_address: ip,
+          created_at: new Date().toISOString(),
         })
         .select('id')
         .single();
