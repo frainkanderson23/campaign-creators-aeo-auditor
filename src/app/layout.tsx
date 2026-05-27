@@ -1,5 +1,7 @@
 import type { Metadata } from 'next';
 import { DM_Sans, Inter } from 'next/font/google';
+import { Header } from '@/components/layout/Header';
+import { Footer } from '@/components/layout/Footer';
 import './globals.css';
 
 const dmSans = DM_Sans({
@@ -30,7 +32,13 @@ export default function RootLayout({
       lang="en"
       className={`${dmSans.variable} ${inter.variable} h-full antialiased`}
     >
-      <body className="min-h-full flex flex-col">{children}</body>
+      <body className="min-h-full flex flex-col">
+        <Header />
+        <main className="flex-1">
+          <div className="max-w-5xl mx-auto px-6 py-8 w-full">{children}</div>
+        </main>
+        <Footer />
+      </body>
     </html>
   );
 }
