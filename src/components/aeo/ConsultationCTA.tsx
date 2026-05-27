@@ -20,9 +20,11 @@ export function ConsultationCTA({
         <h3 className={styles.heading}>{heading}</h3>
         <p className={styles.body}>{body}</p>
       </div>
-      <Link href={ctaHref} className={styles.cta}>
-        {ctaLabel}
-      </Link>
+      <div className={styles.ctaWrap}>
+        <Link href={ctaHref} className={styles.cta}>
+          {ctaLabel}
+        </Link>
+      </div>
     </section>
   );
 }

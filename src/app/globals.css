@@ -70,8 +70,67 @@ body {
   background: var(--color-background);
   border: 1px solid var(--color-border);
   border-radius: var(--radius-lg);
-  padding: 2rem;
+  padding: 1rem;
   box-shadow: 0 1px 2px rgba(15, 23, 42, 0.04);
+}
+
+@media (min-width: 1024px) {
+  .card {
+    padding: 1.5rem;
+  }
+}
+
+.section {
+  padding-top: 3rem;
+  padding-bottom: 3rem;
+}
+
+@media (min-width: 1024px) {
+  .section {
+    padding-top: 5rem;
+    padding-bottom: 5rem;
+  }
+}
+
+.form-wrap {
+  width: 100%;
+  max-width: 600px;
+  margin-left: auto;
+  margin-right: auto;
+}
+
+.category-grid {
+  display: grid;
+  grid-template-columns: 1fr;
+  gap: 1rem;
+}
+
+@media (min-width: 768px) {
+  .category-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (min-width: 1024px) {
+  .category-grid {
+    grid-template-columns: repeat(3, 1fr);
+  }
+}
+
+.hero-h1 {
+  font-family: var(--font-display);
+  font-weight: 600;
+  letter-spacing: -0.02em;
+  font-size: 32px;
+  line-height: 1.15;
+  color: var(--color-text);
+  margin: 0;
+}
+
+@media (min-width: 1024px) {
+  .hero-h1 {
+    font-size: 40px;
+  }
 }
 
 .input {

@@ -3,8 +3,14 @@
   border: 1px solid var(--color-border);
   background-color: var(--color-background);
   border-radius: var(--radius-md);
-  padding: 1.25rem;
+  padding: 1rem;
   overflow: hidden;
+}
+
+@media (min-width: 1024px) {
+  .card {
+    padding: 1.5rem;
+  }
 }
 
 .body {
