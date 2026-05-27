@@ -12,6 +12,7 @@ type PageProps = {
 const VALID_STATES: readonly AuditState[] = [
   'loading',
   'failed',
+  'timeout',
   'preview',
   'unlocked',
 ];

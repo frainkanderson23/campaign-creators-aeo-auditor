@@ -8,19 +8,59 @@ export interface EmailGateOverlayProps {
   onUnlock: (email: string) => void;
 }
 
+const SERVER_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+
 export function EmailGateOverlay({ onUnlock }: EmailGateOverlayProps) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
+  const [isSubmitting, setIsSubmitting] = useState(false);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
+
+    if (isSubmitting) return;
+
     const trimmed = email.trim();
     if (!trimmed || !trimmed.includes('@')) {
       setError('Enter a valid email address.');
       return;
     }
+
     setError(null);
-    onUnlock(trimmed);
+    setIsSubmitting(true);
+
+    try {
+      const response = await fetch('/api/email-gate', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ email: trimmed }),
+      });
+
+      if (response.status >= 500 && response.status < 600) {
+        setError(SERVER_ERROR_MESSAGE);
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!response.ok) {
+        let message = SERVER_ERROR_MESSAGE;
+        try {
+          const data = (await response.json()) as { error?: string };
+          if (data?.error) message = data.error;
+        } catch {
+          // ignore JSON parse failure; use default message
+        }
+        setError(message);
+        setIsSubmitting(false);
+        return;
+      }
+
+      setIsSubmitting(false);
+      onUnlock(trimmed);
+    } catch {
+      setError(SERVER_ERROR_MESSAGE);
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -42,9 +82,10 @@ export function EmailGateOverlay({ onUnlock }: EmailGateOverlayProps) {
           placeholder="you@company.com"
           aria-label="Work email"
           aria-invalid={error ? true : undefined}
+          disabled={isSubmitting}
         />
-        <Button type="submit" variant="primary">
-          Get My Report
+        <Button type="submit" variant="primary" disabled={isSubmitting}>
+          {isSubmitting ? 'Submitting…' : 'Get My Report'}
         </Button>
       </form>
       {error && (
