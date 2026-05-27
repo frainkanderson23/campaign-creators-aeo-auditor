@@ -1,87 +1,64 @@
-export interface CategoryFinding {
-  [key: string]: unknown;
-}
+import type { RawFindings } from '@/src/types/audit';
 
-export interface Category {
-  score: number;
-  findings: CategoryFinding[];
-}
+const FALLBACK_INSIGHTS: readonly string[] = [
+  'Ensure your page title and meta description are descriptive and keyword-rich.',
+  'Consider adding FAQ schema to directly answer common questions in AI results.',
+  'Regularly update your content to maintain freshness signals for AI crawlers.',
+];
 
-export type Categories = Record<string, Category>;
-
-function categoryScore(categories: Categories, key: string): number | null {
-  const c = categories[key];
-  if (!c || typeof c.score !== 'number') return null;
-  return c.score;
-}
-
-export function generatePreviewInsights(categories: Categories): string[] {
+export function generatePreviewInsights(findings: RawFindings): string[] {
   const insights: string[] = [];
 
-  const aiCrawler = categoryScore(categories, 'ai_crawler');
-  if (aiCrawler !== null) {
-    if (aiCrawler < 50) {
-      insights.push(
-        'Your site blocks major AI crawlers — you are invisible to ChatGPT, Claude, and Perplexity.',
-      );
-    } else if (aiCrawler < 80) {
-      insights.push(
-        'AI crawlers can access your site, but sitemap gaps reduce indexing efficiency.',
-      );
-    } else {
-      insights.push(
-        'AI crawlers have full access to your site with a well-structured sitemap.',
-      );
-    }
-  }
-
-  const schema = categoryScore(categories, 'schema');
-  if (schema !== null) {
-    if (schema < 40) {
-      insights.push(
-        'No structured data detected. AI engines cannot extract reliable facts from your pages.',
-      );
-    } else if (schema < 70) {
-      insights.push(
-        'Basic schema markup found. Adding FAQ or HowTo schema would significantly boost AI answer inclusion.',
-      );
-    } else {
-      insights.push(
-        'Strong schema implementation. Your content is well-structured for AI extraction.',
-      );
-    }
-  }
-
-  const contentStructure = categoryScore(categories, 'content_structure');
-  if (contentStructure !== null) {
-    if (contentStructure < 50) {
-      insights.push(
-        'Content structure is poor. Missing headings and meta descriptions reduce AI comprehension.',
-      );
-    } else if (contentStructure < 75) {
-      insights.push(
-        'Content structure is adequate but could be improved with more descriptive headings and richer content.',
-      );
-    } else {
-      insights.push(
-        'Content structure is strong. Well-organized pages improve AI answer engine relevance.',
-      );
-    }
-  }
-
-  const authority = categoryScore(categories, 'authority');
-  if (authority !== null && authority < 60) {
+  if (!findings.robotsTxtAllowsAI) {
     insights.push(
-      'Authority signals are weak. Building backlinks and brand mentions would improve AI citation likelihood.',
+      'Your robots.txt is blocking AI crawlers — update it to allow GPTBot and ClaudeBot.',
+    );
+  }
+  if (!findings.sitemapListed) {
+    insights.push(
+      'No sitemap entry detected. Submit an XML sitemap to improve AI indexing.',
+    );
+  }
+  if (findings.structuredDataTypes.length === 0) {
+    insights.push(
+      'No structured data found. Add Schema.org markup to help AI understand your content.',
+    );
+  }
+  if (findings.wordCount < 300) {
+    insights.push(
+      'Content is too short. Aim for 300+ words to provide sufficient context for AI answers.',
+    );
+  }
+  if (findings.internalLinks.length < 3) {
+    insights.push(
+      'Low internal link count. Add more internal links to improve content discoverability.',
+    );
+  }
+  if (findings.lastModified === null) {
+    insights.push(
+      'Last-modified date is missing. Publishing dates signal freshness to AI systems.',
+    );
+  }
+  if (!findings.openGraphPresent) {
+    insights.push(
+      'No Open Graph tags detected. Add OG tags to improve content previews in AI summaries.',
+    );
+  }
+  if (findings.externalLinks.length < 1) {
+    insights.push(
+      'No external links found. Citing authoritative sources boosts your authority signals.',
+    );
+  }
+  if (findings.canonicalUrl === null) {
+    insights.push(
+      'Canonical URL is missing. Set a canonical tag to prevent duplicate content issues.',
     );
   }
 
-  const freshness = categoryScore(categories, 'freshness');
-  if (freshness !== null && freshness < 60) {
-    insights.push(
-      'Content freshness is low. Regular updates help AI engines prioritize your pages.',
-    );
+  for (const fallback of FALLBACK_INSIGHTS) {
+    if (insights.length >= 3) break;
+    insights.push(fallback);
   }
 
-  return insights;
+  return insights.slice(0, 3);
 }
