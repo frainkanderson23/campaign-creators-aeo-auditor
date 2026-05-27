@@ -1,4 +1,3 @@
-import Link from 'next/link';
 import styles from './ConsultationCTA.module.css';
 
 export interface ConsultationCTAProps {
@@ -20,9 +19,14 @@ export function ConsultationCTA({
         <h3 className={styles.heading}>{heading}</h3>
         <p className={styles.body}>{body}</p>
       </div>
-      <Link href={ctaHref} className={styles.cta}>
+      <a
+        href={ctaHref}
+        className={styles.ctaLink}
+        target="_blank"
+        rel="noopener noreferrer"
+      >
         {ctaLabel}
-      </Link>
+      </a>
     </section>
   );
 }

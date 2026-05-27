@@ -1,0 +1,92 @@
+.badge {
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  border-radius: var(--radius-full);
+  font-family: var(--font-body);
+  font-size: 0.8125rem;
+  font-weight: 600;
+  line-height: 1;
+  padding: 0.25rem 0.625rem;
+  white-space: nowrap;
+}
+
+/* Sizes */
+.sm {
+  font-size: 0.75rem;
+  padding: 0.125rem 0.5rem;
+}
+
+.lg {
+  font-size: 1.75rem;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  width: 3rem;
+  height: 3rem;
+  padding: 0;
+}
+
+/* Variants */
+.variant-default {
+  background-color: var(--color-accent);
+  color: var(--color-text);
+}
+
+.variant-success {
+  background-color: color-mix(in srgb, var(--grade-a) 15%, white);
+  color: var(--grade-a);
+}
+
+.variant-warning {
+  background-color: color-mix(in srgb, var(--grade-c) 15%, white);
+  color: var(--grade-c);
+}
+
+.variant-danger {
+  background-color: color-mix(in srgb, var(--grade-f) 15%, white);
+  color: var(--grade-f);
+}
+
+.variant-info {
+  background-color: var(--color-accent);
+  color: var(--color-primary);
+}
+
+.variant-muted {
+  background-color: color-mix(in srgb, var(--color-border) 50%, white);
+  color: var(--color-text-secondary);
+}
+
+/* Grade variants — circular for single-letter grade pills */
+.variant-grade-a,
+.variant-grade-b,
+.variant-grade-c,
+.variant-grade-d,
+.variant-grade-f {
+  color: #ffffff;
+  font-family: var(--font-mono);
+  font-weight: 700;
+  min-width: 2rem;
+  height: 2rem;
+  padding: 0;
+}
+
+.variant-grade-a {
+  background-color: var(--grade-a);
+}
+
+.variant-grade-b {
+  background-color: var(--grade-b);
+}
+
+.variant-grade-c {
+  background-color: var(--grade-c);
+}
+
+.variant-grade-d {
+  background-color: var(--grade-d);
+}
+
+.variant-grade-f {
+  background-color: var(--grade-f);
+}
