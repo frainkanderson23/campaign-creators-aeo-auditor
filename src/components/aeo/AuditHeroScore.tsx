@@ -1,56 +1,47 @@
 import { ProgressRing } from '@/components/ui';
-import { getGradeInterpretation } from '@/lib/gradeInterpretation';
 import styles from './AuditHeroScore.module.css';
 
 export interface AuditHeroScoreProps {
-  score?: number;
-  grade?: string;
-  domain?: string;
+  score: number;
+  grade: string;
+  domain: string;
 }
 
-function gradeColor(grade: string): string {
-  switch (grade.toUpperCase()) {
-    case 'A':
-      return 'var(--grade-a)';
-    case 'B':
-      return 'var(--grade-b)';
-    case 'C':
-      return 'var(--grade-c)';
-    case 'D':
-      return 'var(--grade-d)';
-    case 'F':
-      return 'var(--grade-f)';
-    default:
-      return 'var(--color-text-secondary)';
+function gradeColorVar(grade: string): string {
+  const letter = grade.trim().charAt(0).toLowerCase();
+  if (['a', 'b', 'c', 'd', 'f'].includes(letter)) {
+    return `var(--grade-${letter})`;
   }
+  return 'var(--color-text-secondary)';
 }
 
-function shortInterpretation(grade: string): string {
-  switch (grade.toUpperCase()) {
+function gradeInterpretation(grade: string): string {
+  switch (grade.trim().charAt(0).toUpperCase()) {
     case 'A':
-      return 'Your AEO presence is excellent — keep defending your lead.';
+      return 'Excellent AEO Presence';
     case 'B':
-      return 'Strong AEO foundation with room for targeted gains.';
+      return 'Strong Performance';
     case 'C':
-      return 'Your AEO presence has room to grow.';
+      return 'Room for Improvement';
     case 'D':
-      return 'Weak AEO signals — meaningful work is needed.';
+      return 'Needs Attention';
     case 'F':
-      return 'Critical AEO gaps — immediate action required.';
+      return 'Critical Issues Detected';
     default:
-      return getGradeInterpretation(grade);
+      return 'AEO Performance';
   }
 }
 
 export function AuditHeroScore({
-  score = 62,
-  grade = 'C',
-  domain = 'example.com',
+  score,
+  grade,
+  domain,
 }: AuditHeroScoreProps) {
-  const color = gradeColor(grade);
+  const color = gradeColorVar(grade);
+  const interpretation = gradeInterpretation(grade);
+
   return (
     <section className={styles.hero} aria-label="Overall AEO score">
-      <p className={styles.domain}>{domain}</p>
       <div className={styles.ringWrap}>
         <ProgressRing
           value={score}
@@ -61,13 +52,14 @@ export function AuditHeroScore({
         />
       </div>
       <span
-        className={styles.gradeBadge}
-        style={{ backgroundColor: color }}
+        className={styles.gradeLetter}
+        style={{ color }}
         aria-label={`Grade ${grade}`}
       >
-        Grade {grade}
+        {grade}
       </span>
-      <p className={styles.interpretation}>{shortInterpretation(grade)}</p>
+      <p className={styles.interpretation}>{interpretation}</p>
+      <p className={styles.domain}>{domain}</p>
     </section>
   );
 }

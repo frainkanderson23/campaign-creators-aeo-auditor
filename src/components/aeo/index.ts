@@ -1,8 +1,5 @@
 export { AuditScoreCard } from './AuditScoreCard';
-export type {
-  AuditScoreCardProps,
-  AuditScoreCardFinding,
-} from './AuditScoreCard';
+export type { AuditScoreCardProps } from './AuditScoreCard';
 
 export { AuditHeroScore } from './AuditHeroScore';
 export type { AuditHeroScoreProps } from './AuditHeroScore';
@@ -12,6 +9,8 @@ export type { EmailGateOverlayProps } from './EmailGateOverlay';
 
 export { ConsultationCTA } from './ConsultationCTA';
 export type { ConsultationCTAProps } from './ConsultationCTA';
+
+export { AuditPreview } from './AuditPreview';
 
 export { AuditForm } from './AuditForm';
 
