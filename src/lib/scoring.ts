@@ -2,13 +2,12 @@ import type { RawFindings } from '@/src/types/audit';
 
 export function getGrade(score: number): string {
   if (score < 0 || score > 100) {
-    throw new Error('Score out of bounds: must be 0–100');
+    throw new RangeError('Score out of bounds: must be between 0 and 100');
   }
-  if (score >= 90) return 'A+';
-  if (score >= 80) return 'A';
-  if (score >= 70) return 'B';
+  if (score >= 90) return 'A';
+  if (score >= 75) return 'B';
   if (score >= 60) return 'C';
-  if (score >= 50) return 'D';
+  if (score >= 45) return 'D';
   return 'F';
 }
 
@@ -32,56 +31,70 @@ function clamp(score: number): number {
   return Math.max(0, Math.min(100, score));
 }
 
-export function scoreAiCrawler(findings: RawFindings | null | undefined): number {
+export function scoreAiCrawler(findings: RawFindings): number {
   if (!findings) return 0;
   let score = 0;
-  if (findings.robotsTxtAllowsAI) score += 40;
-  if (findings.sitemapListed) score += 30;
-  if (findings.canonicalUrl !== null) score += 20;
-  if (findings.openGraphPresent) score += 10;
+  if (findings.robotsTxtAllowsAI === true) score += 40;
+  if (findings.hasLlmsTxt === true) score += 35;
+  if (findings.statusCode === 200) score += 25;
   return clamp(score);
 }
 
-export function scoreSchema(findings: RawFindings | null | undefined): number {
+export function scoreSchema(findings: RawFindings): number {
   if (!findings) return 0;
-  const uniqueTypes = Array.from(new Set(findings.structuredDataTypes));
-  if (uniqueTypes.length > 0) {
-    const score = 50 + (uniqueTypes.length - 1) * 10;
-    return clamp(score);
+  let score = 0;
+  const count = findings.structuredDataCount ?? 0;
+  if (count >= 1) score += 30;
+  if (count >= 3) score += 20;
+  const types = Array.isArray(findings.schemaTypes) ? findings.schemaTypes : [];
+  if (types.includes('FAQPage')) score += 25;
+  if (types.includes('Article') || types.includes('NewsArticle')) score += 15;
+  const ogKeys = findings.openGraphTags
+    ? Object.keys(findings.openGraphTags)
+    : [];
+  if (ogKeys.length >= 2) score += 10;
+  return clamp(score);
+}
+
+export function scoreContentStructure(findings: RawFindings): number {
+  if (!findings) return 0;
+  let score = 0;
+  const headings = findings.headingStructure ?? { h1: 0, h2: 0, h3: 0 };
+  if (headings.h1 === 1) score += 20;
+  if (headings.h2 >= 2) score += 15;
+  const wordCount = findings.wordCount ?? 0;
+  if (wordCount >= 300) score += 15;
+  if (wordCount >= 800) score += 15;
+  if (typeof findings.metaDescription === 'string' && findings.metaDescription.length > 0) {
+    score += 10;
   }
-  if (findings.schemaMarkup.length > 0) return clamp(20);
-  return 0;
-}
-
-export function scoreContentStructure(findings: RawFindings | null | undefined): number {
-  if (!findings) return 0;
-  let score = 0;
-  if (findings.wordCount >= 300) score += 30;
-  if (findings.wordCount >= 600) score += 20;
-  if (findings.internalLinks.length >= 3) score += 25;
-  if (findings.externalLinks.length >= 1) score += 25;
+  if ((findings.faqCount ?? 0) >= 1) score += 15;
+  if (typeof findings.title === 'string' && findings.title.length > 0) {
+    score += 10;
+  }
   return clamp(score);
 }
 
-export function scoreAuthority(findings: RawFindings | null | undefined): number {
+export function scoreAuthority(findings: RawFindings): number {
   if (!findings) return 0;
   let score = 0;
-  if (findings.externalLinks.length >= 5) score += 40;
-  else if (findings.externalLinks.length >= 1) score += 20;
-  if (findings.openGraphPresent) score += 30;
-  if (findings.canonicalUrl !== null) score += 30;
+  if (findings.authorInfo === true) score += 40;
+  if ((findings.externalLinks ?? 0) >= 2) score += 30;
+  if (typeof findings.canonicalUrl === 'string' && findings.canonicalUrl.length > 0) {
+    score += 20;
+  }
+  if ((findings.internalLinks ?? 0) >= 3) score += 10;
   return clamp(score);
 }
 
-export function scoreFreshness(findings: RawFindings | null | undefined): number {
+export function scoreFreshness(findings: RawFindings): number {
   if (!findings) return 0;
-  if (findings.lastModified === null) return 0;
-  const lastModMs = new Date(findings.lastModified).getTime();
-  if (Number.isNaN(lastModMs)) return 0;
-  const ageDays = (Date.now() - lastModMs) / (1000 * 60 * 60 * 24);
-  if (ageDays <= 30) return clamp(100);
-  if (ageDays <= 90) return clamp(70);
-  if (ageDays <= 180) return clamp(50);
+  const dateStr = findings.lastModified ?? findings.publicationDate;
+  if (!dateStr) return 0;
+  const ms = new Date(dateStr).getTime();
+  if (Number.isNaN(ms)) return 0;
+  const ageDays = (Date.now() - ms) / (1000 * 60 * 60 * 24);
+  if (ageDays <= 90) return clamp(60);
   if (ageDays <= 365) return clamp(30);
   return clamp(10);
 }

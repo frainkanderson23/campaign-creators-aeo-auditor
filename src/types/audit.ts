@@ -1,22 +1,35 @@
 export interface Signal {
+  id: string;
   label: string;
-  value: string | number | boolean;
-  pass: boolean;
+  present: boolean;
+  score: number;
+  maxScore: number;
+  notes?: string;
 }
 
 export interface RawFindings {
   url: string;
-  htmlSnapshot: string;
-  schemaMarkup: string[];
-  internalLinks: string[];
-  externalLinks: string[];
-  wordCount: number;
-  lastModified: string | null;
+  statusCode: number;
   robotsTxtAllowsAI: boolean;
-  sitemapListed: boolean;
-  canonicalUrl: string | null;
-  openGraphPresent: boolean;
-  structuredDataTypes: string[];
+  hasLlmsTxt: boolean;
+  schemaTypes: string[];
+  headingStructure: {
+    h1: number;
+    h2: number;
+    h3: number;
+  };
+  wordCount: number;
+  lastModified?: string;
+  internalLinks: number;
+  externalLinks: number;
+  metaDescription?: string;
+  title?: string;
+  canonicalUrl?: string;
+  openGraphTags: Record<string, string>;
+  structuredDataCount: number;
+  faqCount: number;
+  authorInfo: boolean;
+  publicationDate?: string;
 }
 
 export interface CrawledPage {
@@ -28,39 +41,31 @@ export interface CrawledPage {
 export interface AuditRequest {
   url: string;
   email?: string;
-}
-
-export interface Lead {
-  email: string;
-  url: string;
-  capturedAt: string;
-}
-
-export interface AuditScores {
-  ai_crawler: number;
-  schema: number;
-  content_structure: number;
-  authority: number;
-  freshness: number;
-  overall: number;
-}
-
-export interface AuditGrades {
-  ai_crawler: string;
-  schema: string;
-  content_structure: string;
-  authority: string;
-  freshness: string;
-  overall: string;
+  requestedAt: string;
 }
 
 export interface AuditResult {
   id: string;
   url: string;
-  requestedAt: string;
-  crawledPage: CrawledPage;
-  scores: AuditScores;
-  grades: AuditGrades;
+  scores: {
+    ai_crawler: number;
+    schema: number;
+    content_structure: number;
+    authority: number;
+    freshness: number;
+    overall: number;
+  };
+  grade: string;
+  findings: RawFindings;
   insights: string[];
-  lead?: Lead;
+  createdAt: string;
+  status: 'pending' | 'processing' | 'complete' | 'error';
+}
+
+export interface Lead {
+  id: string;
+  email: string;
+  auditId: string;
+  createdAt: string;
+  gdprConsent: boolean;
 }
