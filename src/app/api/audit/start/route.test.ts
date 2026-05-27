@@ -36,7 +36,7 @@ beforeEach(() => {
   vi.resetModules();
   rateLimitMock.mockReset();
   supabaseInsertMock.mockReset();
-  rateLimitMock.mockResolvedValue({ limited: false });
+  rateLimitMock.mockResolvedValue({ allowed: true, remainingRequests: 9 });
   supabaseInsertMock.mockReturnValue({ data: { id: 'audit-123' }, error: null });
   process.env.NEXT_PUBLIC_SUPABASE_URL = 'https://example.supabase.co';
   process.env.SUPABASE_SERVICE_ROLE_KEY = 'service-role-key';
@@ -84,7 +84,7 @@ describe('POST /api/audit/start', () => {
   });
 
   it('returns 429 with Retry-After when rate-limited', async () => {
-    rateLimitMock.mockResolvedValueOnce({ limited: true });
+    rateLimitMock.mockResolvedValueOnce({ allowed: false, remainingRequests: 0 });
     const { POST } = await import('./route');
     const res = await POST(makeRequest({ url: 'https://example.com' }));
     expect(res.status).toBe(429);

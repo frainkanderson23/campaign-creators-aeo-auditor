@@ -85,8 +85,8 @@ export async function POST(request: NextRequest): Promise<Response> {
   const ip = getClientIp(request);
 
   try {
-    const { limited } = await checkRateLimit(ip);
-    if (limited) {
+    const { allowed } = await checkRateLimit(ip);
+    if (!allowed) {
       return NextResponse.json(
         { error: 'Rate limit exceeded', retryAfterSeconds: 3600 },
         { status: 429, headers: { 'Retry-After': '3600' } },
