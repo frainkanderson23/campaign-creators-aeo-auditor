@@ -1,4 +1,4 @@
-import { ProgressRing } from '@/components/ui';
+import { ProgressRing, type ProgressRingGrade } from '@/components/ui';
 import { getGradeInterpretation } from '@/lib/gradeInterpretation';
 import styles from './AuditHeroScore.module.css';
 
@@ -6,6 +6,15 @@ export interface AuditHeroScoreProps {
   score?: number;
   grade?: string;
   domain?: string;
+}
+
+const VALID_GRADES: ProgressRingGrade[] = ['A', 'B', 'C', 'D', 'F'];
+
+function normalizeGrade(grade: string): ProgressRingGrade {
+  const upper = grade.toUpperCase();
+  return (VALID_GRADES as string[]).includes(upper)
+    ? (upper as ProgressRingGrade)
+    : 'C';
 }
 
 function gradeColor(grade: string): string {
@@ -52,13 +61,7 @@ export function AuditHeroScore({
     <section className={styles.hero} aria-label="Overall AEO score">
       <p className={styles.domain}>{domain}</p>
       <div className={styles.ringWrap}>
-        <ProgressRing
-          value={score}
-          max={100}
-          size="lg"
-          color={color}
-          ariaLabel={`Overall AEO score ${score} of 100, grade ${grade}`}
-        />
+        <ProgressRing score={score} grade={normalizeGrade(grade)} size="lg" />
       </div>
       <span
         className={styles.gradeBadge}

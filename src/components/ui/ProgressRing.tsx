@@ -1,85 +1,82 @@
-import type { CSSProperties, ReactNode } from 'react';
-import styles from './ProgressRing.module.css';
-
-type Size = 'sm' | 'md' | 'lg';
-
-const SIZE_PX: Record<Size, number> = {
-  sm: 88,
-  md: 128,
-  lg: 192,
-};
-
-const STROKE_PX: Record<Size, number> = {
-  sm: 8,
-  md: 10,
-  lg: 14,
-};
-
-const VALUE_FONT: Record<Size, string> = {
-  sm: '1.5rem',
-  md: '2rem',
-  lg: '3rem',
-};
+export type ProgressRingSize = 'sm' | 'md' | 'lg';
+export type ProgressRingGrade = 'A' | 'B' | 'C' | 'D' | 'F';
 
 export interface ProgressRingProps {
-  value: number;
-  max?: number;
-  size?: Size;
-  color?: string;
-  trackColor?: string;
-  children?: ReactNode;
-  showValue?: boolean;
-  suffix?: string;
-  ariaLabel?: string;
+  score: number;
+  grade: ProgressRingGrade;
+  size?: ProgressRingSize;
 }
 
-export function ProgressRing({
-  value,
-  max = 100,
-  size = 'md',
-  color,
-  trackColor,
-  children,
-  showValue = true,
-  suffix = '/100',
-  ariaLabel,
-}: ProgressRingProps) {
+const SIZE_PX: Record<ProgressRingSize, number> = {
+  sm: 64,
+  md: 96,
+  lg: 128,
+};
+
+const STROKE_PX: Record<ProgressRingSize, number> = {
+  sm: 6,
+  md: 8,
+  lg: 10,
+};
+
+const SCORE_FONT: Record<ProgressRingSize, string> = {
+  sm: '1.125rem',
+  md: '1.5rem',
+  lg: '2rem',
+};
+
+const GRADE_FONT: Record<ProgressRingSize, string> = {
+  sm: 'var(--font-size-xs)',
+  md: 'var(--font-size-sm)',
+  lg: 'var(--font-size-md)',
+};
+
+const GRADE_VAR: Record<ProgressRingGrade, string> = {
+  A: 'var(--grade-a)',
+  B: 'var(--grade-b)',
+  C: 'var(--grade-c)',
+  D: 'var(--grade-d)',
+  F: 'var(--grade-f)',
+};
+
+export function ProgressRing({ score, grade, size = 'md' }: ProgressRingProps) {
   const dimension = SIZE_PX[size];
   const stroke = STROKE_PX[size];
   const radius = (dimension - stroke) / 2;
   const circumference = 2 * Math.PI * radius;
-  const clamped = Math.max(0, Math.min(max, value));
-  const ratio = max > 0 ? clamped / max : 0;
-  const offset = circumference - ratio * circumference;
-
-  const barStyle: CSSProperties = color ? { stroke: color } : {};
-  const trackStyle: CSSProperties = trackColor ? { stroke: trackColor } : {};
+  const clamped = Math.max(0, Math.min(100, score));
+  const offset = circumference - (clamped / 100) * circumference;
+  const strokeColor = GRADE_VAR[grade];
 
   return (
     <div
-      className={styles.wrap}
-      style={{ width: dimension, height: dimension }}
       role="img"
-      aria-label={ariaLabel ?? `Score ${clamped} of ${max}`}
+      aria-label={`Score ${clamped} of 100, grade ${grade}`}
+      style={{
+        position: 'relative',
+        width: dimension,
+        height: dimension,
+        display: 'inline-flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+      }}
     >
       <svg
-        className={styles.svg}
         width={dimension}
         height={dimension}
         viewBox={`0 0 ${dimension} ${dimension}`}
+        style={{ transform: 'rotate(-90deg)', display: 'block' }}
         aria-hidden
       >
         <circle
-          className={styles.track}
           cx={dimension / 2}
           cy={dimension / 2}
           r={radius}
           strokeWidth={stroke}
           fill="none"
-          style={trackStyle}
+          stroke="var(--color-border)"
         />
         <circle
-          className={styles.bar}
           cx={dimension / 2}
           cy={dimension / 2}
           r={radius}
@@ -88,20 +85,43 @@ export function ProgressRing({
           strokeLinecap="round"
           strokeDasharray={circumference}
           strokeDashoffset={offset}
-          style={barStyle}
+          stroke={strokeColor}
+          style={{ transition: 'stroke-dashoffset 400ms ease' }}
         />
       </svg>
-      <div className={styles.label}>
-        {children ?? (
-          showValue && (
-            <>
-              <span className={styles.value} style={{ fontSize: VALUE_FONT[size] }}>
-                {clamped}
-              </span>
-              {suffix && <span className={styles.suffix}>{suffix}</span>}
-            </>
-          )
-        )}
+      <div
+        style={{
+          position: 'absolute',
+          inset: 0,
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontFamily: 'var(--font-display)',
+          color: 'var(--color-text)',
+          lineHeight: 1,
+        }}
+      >
+        <span
+          style={{
+            fontSize: SCORE_FONT[size],
+            fontWeight: 600,
+            fontFamily: 'var(--font-display)',
+          }}
+        >
+          {clamped}
+        </span>
+        <span
+          style={{
+            marginTop: 'var(--space-1)',
+            fontSize: GRADE_FONT[size],
+            fontFamily: 'var(--font-body)',
+            color: strokeColor,
+            fontWeight: 600,
+          }}
+        >
+          {grade}
+        </span>
       </div>
     </div>
   );
