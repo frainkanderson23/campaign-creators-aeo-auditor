@@ -7,6 +7,7 @@ import styles from './EmailGateOverlay.module.css';
 export interface EmailGateOverlayProps {
   onUnlock?: (email: string) => void;
   domain?: string;
+  apiEndpoint?: string;
 }
 
 const defaultUnlock = () => {};
@@ -14,12 +15,45 @@ const defaultUnlock = () => {};
 export function EmailGateOverlay({
   onUnlock = defaultUnlock,
   domain = 'example.com',
+  apiEndpoint = '/api/email-gate',
 }: EmailGateOverlayProps) {
   const [email, setEmail] = useState('');
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [error, setError] = useState<string | null>(null);
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-    onUnlock(email);
+    if (isSubmitting) return;
+
+    setError(null);
+    setIsSubmitting(true);
+
+    try {
+      const res = await fetch(apiEndpoint, {
+        method: 'POST',
+        headers: { 'content-type': 'application/json' },
+        body: JSON.stringify({ email, domain }),
+      });
+
+      if (res.status >= 500 && res.status < 600) {
+        setError('Something went wrong. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      if (!res.ok) {
+        const data = (await res.json().catch(() => ({}))) as { error?: string };
+        setError(data.error ?? 'Something went wrong. Please try again.');
+        setIsSubmitting(false);
+        return;
+      }
+
+      setIsSubmitting(false);
+      onUnlock(email);
+    } catch {
+      setError('Something went wrong. Please try again.');
+      setIsSubmitting(false);
+    }
   }
 
   return (
@@ -42,10 +76,22 @@ export function EmailGateOverlay({
           onChange={(e) => setEmail(e.target.value)}
           placeholder="Enter your work email"
           aria-label="Work email"
+          disabled={isSubmitting}
         />
-        <Button type="submit" variant="primary" block>
-          Unlock My Report
+        <Button
+          type="submit"
+          variant="primary"
+          block
+          disabled={isSubmitting}
+          aria-busy={isSubmitting}
+        >
+          {isSubmitting ? 'Unlocking…' : 'Unlock My Report'}
         </Button>
+        {error && (
+          <p className={styles.error} role="alert">
+            {error}
+          </p>
+        )}
       </form>
       <p className={styles.privacy}>We respect your privacy. No spam, ever.</p>
     </section>
