@@ -14,7 +14,9 @@ const TRUST_SIGNALS = [
 const NETWORK_ERROR_MESSAGE =
   'No connection detected. Please check your internet connection and try again.';
 
-function trimToRoot(input: string): string | null {
+type TrimResult = { trimmed: string; wasTrimmed: boolean };
+
+function trimToRoot(input: string): TrimResult | null {
   const candidate = input.trim();
   const withProtocol = /^https?:\/\//i.test(candidate)
     ? candidate
@@ -25,7 +27,11 @@ function trimToRoot(input: string): string | null {
       return null;
     }
     if (!parsed.hostname) return null;
-    return `${parsed.protocol}//${parsed.hostname}`;
+    const trimmed = `${parsed.protocol}//${parsed.hostname}`;
+    const hadPath = parsed.pathname !== '' && parsed.pathname !== '/';
+    const hadQuery = parsed.search.length > 0;
+    const hadHash = parsed.hash.length > 0;
+    return { trimmed, wasTrimmed: hadPath || hadQuery || hadHash };
   } catch {
     return null;
   }
@@ -61,14 +67,20 @@ export function AuditForm() {
       return;
     }
 
-    const stripped = trimToRoot(raw);
-    if (!stripped) {
+    const result = trimToRoot(raw);
+    if (!result) {
       setError('Please enter a valid URL');
       setNotice(null);
       return;
     }
 
-    setNotice(stripped !== raw ? `We've trimmed your URL to the root domain: ${stripped}` : null);
+    const { trimmed, wasTrimmed } = result;
+
+    setNotice(
+      wasTrimmed
+        ? `We've trimmed your URL to the root domain: ${trimmed}`
+        : null,
+    );
     setError(null);
     setSubmitting(true);
 
@@ -76,7 +88,7 @@ export function AuditForm() {
       const response = await fetch('/api/audit/start', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ url: stripped }),
+        body: JSON.stringify({ url: trimmed }),
       });
 
       if (!response.ok) {

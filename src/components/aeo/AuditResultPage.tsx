@@ -51,10 +51,6 @@ export function AuditResultPage({
     return () => window.clearTimeout(timer);
   }, [state]);
 
-  function handleRetry() {
-    setState('loading');
-  }
-
   if (state === 'loading') {
     return (
       <EmptyState
@@ -79,11 +75,7 @@ export function AuditResultPage({
         heading="This is taking longer than expected"
         body="Your audit timed out after 60 seconds. Please try again."
         action={
-          <Link
-            href="/"
-            className={styles.tryAgain}
-            onClick={handleRetry}
-          >
+          <Link href="/" className={styles.tryAgain}>
             Try Again
           </Link>
         }
