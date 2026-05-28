@@ -108,7 +108,7 @@ function deriveRecommendations(data: AuditResultRow) {
     freshness: { title: 'Update content regularly', desc: 'Add a "Last updated" timestamp to key pages, publish monthly insight posts, and refresh statistics. AI models weigh recency when generating answers.', priority: 'low' },
   };
 
-  const BRAND_REC = { title: 'Establish brand mention strategy', desc: 'Build brand mentions in press, directories, and community forums. Direct brand search signals and co-citations help AI models recognize your entity. (Phase 2 analysis)', priority: 'low' as const };
+  const BRAND_REC = { key: 'brand', title: 'Establish brand mention strategy', desc: 'Build brand mentions in press, directories, and community forums. Direct brand search signals and co-citations help AI models recognize your entity. (Phase 2 analysis)', priority: 'low' as const };
 
   const sorted = [...dims].sort((a, b) => a.score - b.score);
   const recs = sorted.map(d => ({ ...ALL_RECS[d.key], key: d.key }));
@@ -225,7 +225,7 @@ export function AuditResultPage({ requestData, auditData }: Props) {
           <ul className={styles.dimList}>
             {DIMENSIONS.map(({ key, label }) => {
               const isPlaceholder = key === 'brand';
-              const score = isPlaceholder ? 0 : clamp((auditData as Record<string, number | null | undefined>)[`${key}_score`]);
+              const score = isPlaceholder ? 0 : clamp((auditData as any as Record<string, number | null | undefined>)[`${key}_score`]);
               const displayScore = isPlaceholder ? '—' : score;
               return (
                 <li key={key} className={styles.dimRow}>
@@ -264,11 +264,11 @@ export function AuditResultPage({ requestData, auditData }: Props) {
               <li key={name} className={styles.engineResult}>
                 <span className={styles.engineName}>{name}</span>
                 <span className={`${styles.erBadge} ${
-                  status === 'cited'   ? styles.erCited :
+                  (status as string) === 'cited'   ? styles.erCited :
                   status === 'partial' ? styles.erPartial :
                                         styles.erMissing
                 }`}>
-                  {status === 'cited' ? '✓ Cited' : status === 'partial' ? '~ Partial' : '✗ Missing'}
+                  {(status as string) === 'cited' ? '✓ Cited' : status === 'partial' ? '~ Partial' : '✗ Missing'}
                 </span>
               </li>
             ))}

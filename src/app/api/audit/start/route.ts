@@ -177,7 +177,7 @@ export async function POST(request: NextRequest): Promise<Response> {
           Authorization: 'Bearer ' + process.env.INTERNAL_CRAWLER_SECRET!.trim(),
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({ auditId, url: normalizedUrl }),
+        body: JSON.stringify({ auditId, domainUrl: normalizedUrl }),
       },
     ).catch(() => {
       // Fire-and-forget; crawler logs its own failures.

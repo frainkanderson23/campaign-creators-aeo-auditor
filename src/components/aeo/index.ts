@@ -13,4 +13,3 @@ export type { ConsultationCTAProps } from './ConsultationCTA';
 export { AuditForm } from './AuditForm';
 
 export { AuditResultPage } from './AuditResultPage';
-export type { AuditState, CategoryScore } from './AuditResultPage';

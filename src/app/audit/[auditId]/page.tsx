@@ -21,7 +21,7 @@ type PageProps = { params: Promise<{ auditId: string }> };
 export async function generateMetadata({ params }: PageProps): Promise<Metadata> {
   const { auditId } = await params;
   const supabase = getSupabase();
-  const { data } = await supabase
+  const { data } = await (supabase as any)
     .from('audit_requests')
     .select('url')
     .eq('id', auditId)
