@@ -57,6 +57,8 @@ export default async function AuditResultRoute({ params }: PageProps) {
 
   if (requestData.status === 'pending' || requestData.status === 'processing') {
     return (
+      <>
+      <meta httpEquiv="refresh" content="3" />
       <div style={{ textAlign: 'center', padding: '6rem 1rem' }}>
         <div style={{ marginBottom: '1.5rem' }}>
           <svg
@@ -79,6 +81,7 @@ export default async function AuditResultRoute({ params }: PageProps) {
           This page will show your results automatically once the audit completes.
         </p>
       </div>
+      </>
     );
   }
 
