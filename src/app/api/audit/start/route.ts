@@ -27,7 +27,7 @@ const startSchema = z.object({
         try {
           const u = new URL(v);
           return u.protocol === 'http:' || u.protocol === 'https:';
-        } catch {
+        } catch (outerErr) { console.error("OUTER_ERROR:", outerErr);
           return false;
         }
       },
@@ -109,14 +109,14 @@ export async function POST(request: NextRequest): Promise<Response> {
           { status: 429, headers: { 'Retry-After': '3600' } },
         );
       }
-    } catch {
+    } catch (outerErr) { console.error("OUTER_ERROR:", outerErr);
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
     let body: unknown;
     try {
       body = await request.json();
-    } catch {
+    } catch (outerErr) { console.error("OUTER_ERROR:", outerErr);
       return NextResponse.json(
         { error: 'Body must be valid JSON.' },
         { status: 400 },
@@ -132,7 +132,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     let hostname: string;
     try {
       hostname = new URL(parsed.data.url).hostname;
-    } catch {
+    } catch (outerErr) { console.error("OUTER_ERROR:", outerErr);
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
     }
 
@@ -158,11 +158,11 @@ export async function POST(request: NextRequest): Promise<Response> {
         .select('id')
         .single();
 
-      if (error || !data) {
+      if (error || !data) { console.error("AUDIT_INSERT_ERROR:", JSON.stringify(error));
         return NextResponse.json({ error: 'Database error' }, { status: 500 });
       }
       auditId = data.id as string;
-    } catch {
+    } catch (outerErr) { console.error("OUTER_ERROR:", outerErr);
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
@@ -184,7 +184,7 @@ export async function POST(request: NextRequest): Promise<Response> {
     });
 
     return NextResponse.json({ auditId }, { status: 201 });
-  } catch {
+  } catch (outerErr) { console.error("OUTER_ERROR:", outerErr);
     return NextResponse.json(
       { error: 'Internal server error' },
       { status: 500 },

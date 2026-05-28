@@ -22,7 +22,7 @@ export async function checkRateLimit(
     .eq('ip', ip)
     .gte('created_at', since);
 
-  if (countError) {
+  if (countError) { console.error("RATE_LIMIT_ERROR:", JSON.stringify(countError));
     throw countError;
   }
 
@@ -34,7 +34,7 @@ export async function checkRateLimit(
     .from('audit_rate_limits')
     .insert({ ip, created_at: new Date().toISOString() });
 
-  if (insertError) {
+  if (insertError) { console.error("RATE_INSERT_ERROR:", JSON.stringify(insertError));
     throw insertError;
   }
 
