@@ -11,8 +11,12 @@ const TRUST_SIGNALS = [
   '10,000+ businesses analyzed',
 ] as const;
 
+const RATE_LIMIT_MESSAGE =
+  'Too many requests. Please wait a moment and try again.';
+const SERVER_ERROR_MESSAGE =
+  'Something went wrong on our end. Please try again shortly.';
 const NETWORK_ERROR_MESSAGE =
-  'No connection detected. Please check your internet connection and try again.';
+  'Connection error. Please check your network and try again.';
 
 type TrimResult = { trimmed: string; wasTrimmed: boolean };
 
@@ -35,17 +39,6 @@ function trimToRoot(input: string): TrimResult | null {
   } catch {
     return null;
   }
-}
-
-function isNetworkError(err: unknown): boolean {
-  if (typeof navigator !== 'undefined' && navigator.onLine === false) {
-    return true;
-  }
-  if (err instanceof TypeError) return true;
-  if (err instanceof Error && /fetch|network/i.test(err.message)) {
-    return true;
-  }
-  return false;
 }
 
 export function AuditForm() {
@@ -91,33 +84,25 @@ export function AuditForm() {
         body: JSON.stringify({ url: trimmed }),
       });
 
-      if (!response.ok) {
-        let message = 'Something went wrong. Please try again.';
-        try {
-          const data = (await response.json()) as { error?: string };
-          if (data?.error) message = data.error;
-        } catch {
-          // ignore JSON parse failure; use default message
+      if (response.status === 201) {
+        const data = (await response.json()) as { auditId?: string };
+        if (data?.auditId) {
+          router.push(`/audit/${data.auditId}`);
+          return;
         }
-        setError(message);
-        setSubmitting(false);
+        setError(SERVER_ERROR_MESSAGE);
         return;
       }
 
-      const data = (await response.json()) as { auditId?: string };
-      if (!data?.auditId) {
-        setError('Something went wrong. Please try again.');
-        setSubmitting(false);
+      if (response.status === 429) {
+        setError(RATE_LIMIT_MESSAGE);
         return;
       }
 
-      router.push(`/audit/${data.auditId}`);
-    } catch (err) {
-      if (isNetworkError(err)) {
-        setError(NETWORK_ERROR_MESSAGE);
-      } else {
-        setError('Something went wrong. Please try again.');
-      }
+      setError(SERVER_ERROR_MESSAGE);
+    } catch {
+      setError(NETWORK_ERROR_MESSAGE);
+    } finally {
       setSubmitting(false);
     }
   }
