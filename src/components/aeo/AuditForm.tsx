@@ -38,18 +38,36 @@ function isValidDomain(domain: string): boolean {
 export function AuditForm() {
   const [domain, setDomain] = useState('');
   const [touched, setTouched] = useState(false);
+  const [loading, setLoading] = useState(false);
+  const [error, setError] = useState<string | null>(null);
   const inputRef = useRef<HTMLInputElement>(null);
 
   const clean = cleanDomain(domain);
   const valid = isValidDomain(clean);
   const showError = touched && domain.length > 0 && !valid;
 
-  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+  async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
     setTouched(true);
-    if (!valid) return;
-    // TODO: redirect to /audit?domain=<clean>
-    console.log('auditing:', clean);
+    if (!valid || loading) return;
+    setLoading(true);
+    try {
+      const res = await fetch('/api/audit/start', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ url: `https://${clean}` }),
+      });
+      const data = await res.json();
+      if (data.auditId) {
+        window.location.href = `/audit/${data.auditId}`;
+      } else {
+        setError(data.error || 'Something went wrong');
+        setLoading(false);
+      }
+    } catch {
+      setError('Network error — please try again');
+      setLoading(false);
+    }
   }
 
   return (
