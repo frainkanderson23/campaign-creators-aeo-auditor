@@ -185,6 +185,7 @@ function getFreshnessFindings(rf: RawFindings): FindingItem[] {
 export default function AuditResultPage({ requestData, auditData }: Props) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [expandedDim, setExpandedDim] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const rafRef = useRef<number | null>(null);
 
   const domain = requestData.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -211,6 +212,16 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   const dashoffset = circumference - (animatedScore / 100) * circumference;
 
   const rf = auditData.raw_findings;
+
+  const handleShare = async () => {
+    await navigator.clipboard.writeText(window.location.href);
+    setCopied(true);
+    setTimeout(() => setCopied(false), 2000);
+  };
+
+  const handleDownload = () => {
+    window.print();
+  };
 
   const dims = [
     { label: 'Crawlability', key: 'crawlability', score: auditData.answerability_score, getFindings: getCrawlabilityFindings },
@@ -266,9 +277,12 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
             </div>
           </div>
           <div className={styles.auditActions}>
-            <button className={styles.btnSecondary}>Share</button>
-            <button className={styles.btnSecondary}>Download PDF</button>
-            <button className={styles.btnPrimary}>New audit</button>
+            <div style={{ position: 'relative' }}>
+              <button className={styles.btnSecondary} onClick={handleShare}>Share</button>
+              {copied && <span className={styles.copiedToast}>Link copied!</span>}
+            </div>
+            <button className={styles.btnSecondary} onClick={handleDownload}>Download PDF</button>
+            <a href="/" className={styles.btnPrimary}>New audit</a>
           </div>
         </div>
 
