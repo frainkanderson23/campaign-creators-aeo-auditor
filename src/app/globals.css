@@ -1,5 +1,35 @@
 @import "tailwindcss";
 
+/* ─── Handoff tokens (design/handoff/styles.css) ───
+   These are the SOLE source of truth for the AEO Auditor landing page.
+   Names match the handoff bundle exactly: --primary, --ink, --line, etc. */
+:root {
+  --primary: #2563EB;
+  --primary-700: #1D4ED8;
+  --primary-900: #1E3A8A;
+  --secondary: #6366F1;
+  --accent: #EFF6FF;
+  --accent-2: #F5F3FF;
+  --cream: #FAF8F3;
+  --warm: #FEF8F0;
+  --tint-1: #F8FAFF;
+  --bg: #FFFFFF;
+  --ink: #15201f;
+  --ink-2: #4A5568;
+  --ink-3: #7C8A98;
+  --line: #E5EAF0;
+  --line-strong: #CDD5DF;
+  --good: #10B981;
+  --warn: #F59E0B;
+  --bad: #EF4444;
+
+  --shadow-1: 0 1px 2px rgba(15, 23, 42, .05);
+  --shadow-2: 0 6px 16px -8px rgba(15, 23, 42, .12), 0 1px 2px rgba(15, 23, 42, .04);
+  --shadow-3: 0 24px 56px -28px rgba(37, 99, 235, .35), 0 4px 12px -4px rgba(15, 23, 42, .08);
+
+  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+}
+
 :root {
   --background: #fafaf8;
   --foreground: #0f172a;
