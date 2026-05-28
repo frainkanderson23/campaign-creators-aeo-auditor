@@ -17,4 +17,5 @@ export type {
   AuditResultPageProps,
   AuditState,
   CategoryScore,
+  FullAuditResult,
 } from './AuditResultPage';

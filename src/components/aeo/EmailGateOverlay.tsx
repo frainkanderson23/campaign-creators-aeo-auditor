@@ -1,65 +1,58 @@
 'use client';
 
 import { useState, type FormEvent } from 'react';
+import { Loader2 } from 'lucide-react';
 import { Button, Input } from '@/components/ui';
 import styles from './EmailGateOverlay.module.css';
 
 export interface EmailGateOverlayProps {
-  onUnlock: (email: string) => void;
+  auditRequestId: string;
+  onUnlocked: (email: string, result: unknown) => void;
 }
 
-const SERVER_ERROR_MESSAGE = 'Something went wrong. Please try again.';
+const INVALID_EMAIL_MESSAGE = 'Please enter a valid email address.';
+const GENERIC_ERROR_MESSAGE = 'Something went wrong. Please try again.';
 
-export function EmailGateOverlay({ onUnlock }: EmailGateOverlayProps) {
+export function EmailGateOverlay({
+  auditRequestId,
+  onUnlocked,
+}: EmailGateOverlayProps) {
   const [email, setEmail] = useState('');
   const [error, setError] = useState<string | null>(null);
-  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [isLoading, setIsLoading] = useState(false);
 
   async function handleSubmit(e: FormEvent<HTMLFormElement>) {
     e.preventDefault();
-
-    if (isSubmitting) return;
-
-    const trimmed = email.trim();
-    if (!trimmed || !trimmed.includes('@')) {
-      setError('Enter a valid email address.');
-      return;
-    }
+    if (isLoading) return;
 
     setError(null);
-    setIsSubmitting(true);
+    setIsLoading(true);
 
     try {
-      const response = await fetch('/api/email-gate', {
+      const response = await fetch(`/api/audit/${auditRequestId}/unlock`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ email: trimmed }),
+        body: JSON.stringify({ email: email.trim() }),
       });
 
-      if (response.status >= 500 && response.status < 600) {
-        setError(SERVER_ERROR_MESSAGE);
-        setIsSubmitting(false);
+      if (response.status === 200 || response.status === 409) {
+        const result = await response.json();
+        setIsLoading(false);
+        onUnlocked(email.trim(), result);
         return;
       }
 
-      if (!response.ok) {
-        let message = SERVER_ERROR_MESSAGE;
-        try {
-          const data = (await response.json()) as { error?: string };
-          if (data?.error) message = data.error;
-        } catch {
-          // ignore JSON parse failure; use default message
-        }
-        setError(message);
-        setIsSubmitting(false);
+      if (response.status === 400) {
+        setError(INVALID_EMAIL_MESSAGE);
+        setIsLoading(false);
         return;
       }
 
-      setIsSubmitting(false);
-      onUnlock(trimmed);
+      setError(GENERIC_ERROR_MESSAGE);
+      setIsLoading(false);
     } catch {
-      setError(SERVER_ERROR_MESSAGE);
-      setIsSubmitting(false);
+      setError(GENERIC_ERROR_MESSAGE);
+      setIsLoading(false);
     }
   }
 
@@ -82,14 +75,27 @@ export function EmailGateOverlay({ onUnlock }: EmailGateOverlayProps) {
           placeholder="you@company.com"
           aria-label="Work email"
           aria-invalid={error ? true : undefined}
-          disabled={isSubmitting}
+          aria-describedby={error ? 'email-gate-error' : undefined}
+          disabled={isLoading}
         />
-        <Button type="submit" variant="primary" disabled={isSubmitting}>
-          {isSubmitting ? 'Submitting…' : 'Get My Report'}
+        <Button type="submit" variant="primary" disabled={isLoading}>
+          {isLoading ? (
+            <span className={styles.loadingLabel}>
+              <Loader2
+                width={16}
+                height={16}
+                className={styles.spinner}
+                aria-hidden
+              />
+              Unlocking…
+            </span>
+          ) : (
+            'Get My Report'
+          )}
         </Button>
       </form>
       {error && (
-        <p className={styles.error} role="alert">
+        <p id="email-gate-error" className={styles.error} role="alert">
           {error}
         </p>
       )}

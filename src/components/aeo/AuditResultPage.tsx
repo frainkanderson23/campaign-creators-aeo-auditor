@@ -3,7 +3,9 @@
 import { useEffect, useState } from 'react';
 import Link from 'next/link';
 import { AlertCircle, Clock, Loader2 } from 'lucide-react';
+import { toast } from 'sonner';
 import { EmptyState } from '@/components/ui';
+import type { RawFindings } from '@/types/audit';
 import { AuditHeroScore } from './AuditHeroScore';
 import { AuditScoreCard } from './AuditScoreCard';
 import { EmailGateOverlay } from './EmailGateOverlay';
@@ -24,12 +26,19 @@ export type CategoryScore = {
   locked: boolean;
 };
 
+export interface FullAuditResult {
+  raw_findings?: RawFindings | null;
+  categories?: Record<string, { score: number; grade: string }>;
+  [key: string]: unknown;
+}
+
 export interface AuditResultPageProps {
   state: AuditState;
   score: number;
   grade: string;
   domain: string;
   categoryScores: CategoryScore[];
+  auditRequestId: string;
 }
 
 const POLL_TIMEOUT_MS = 60_000;
@@ -40,8 +49,13 @@ export function AuditResultPage({
   grade,
   domain,
   categoryScores,
+  auditRequestId,
 }: AuditResultPageProps) {
   const [state, setState] = useState<AuditState>(initialState);
+  const [isUnlocked, setIsUnlocked] = useState<boolean>(
+    initialState === 'unlocked',
+  );
+  const [fullResult, setFullResult] = useState<FullAuditResult | null>(null);
 
   useEffect(() => {
     if (state !== 'loading') return;
@@ -50,6 +64,16 @@ export function AuditResultPage({
     }, POLL_TIMEOUT_MS);
     return () => window.clearTimeout(timer);
   }, [state]);
+
+  function handleUnlock(_email: string, result: unknown) {
+    const next =
+      result && typeof result === 'object'
+        ? (result as FullAuditResult)
+        : ({} as FullAuditResult);
+    setFullResult((prev) => ({ ...(prev ?? {}), ...next }));
+    setIsUnlocked(true);
+    toast.success('Your results are unlocked');
+  }
 
   if (state === 'loading') {
     return (
@@ -68,7 +92,7 @@ export function AuditResultPage({
           <Clock
             width={28}
             height={28}
-            style={{ color: 'var(--color-primary)' }}
+            style={{ color: 'var(--primary)' }}
             aria-hidden
           />
         }
@@ -90,7 +114,7 @@ export function AuditResultPage({
           <AlertCircle
             width={28}
             height={28}
-            style={{ color: 'var(--grade-f)' }}
+            style={{ color: 'var(--bad)' }}
             aria-hidden
           />
         }
@@ -105,7 +129,9 @@ export function AuditResultPage({
     );
   }
 
-  if (state === 'preview') {
+  const unlockedCategories = mergeCategoryScores(categoryScores, fullResult);
+
+  if (!isUnlocked) {
     return (
       <div className={styles.page}>
         <AuditHeroScore
@@ -125,7 +151,10 @@ export function AuditResultPage({
             />
           ))}
         </div>
-        <EmailGateOverlay onUnlock={() => setState('unlocked')} />
+        <EmailGateOverlay
+          auditRequestId={auditRequestId}
+          onUnlocked={handleUnlock}
+        />
       </div>
     );
   }
@@ -139,7 +168,7 @@ export function AuditResultPage({
         locked={false}
       />
       <div className={styles.cardGrid}>
-        {categoryScores.map((cat) => (
+        {unlockedCategories.map((cat) => (
           <AuditScoreCard
             key={cat.label}
             label={cat.label}
@@ -149,14 +178,29 @@ export function AuditResultPage({
           />
         ))}
       </div>
-      <ConsultationCTA
-        heading="Want expert help?"
-        body="Book a free 30-minute AEO strategy call with our team."
-        ctaLabel="Book a Free Call"
-        ctaHref="#"
-      />
+      <ConsultationCTA />
     </div>
   );
+}
+
+function mergeCategoryScores(
+  base: CategoryScore[],
+  result: FullAuditResult | null,
+): CategoryScore[] {
+  if (!result?.categories) {
+    return base.map((c) => ({ ...c, locked: false }));
+  }
+  const categoryKeys = Object.keys(result.categories);
+  return base.map((cat, index) => {
+    const key = categoryKeys[index];
+    const remote = key ? result.categories?.[key] : undefined;
+    return {
+      ...cat,
+      score: typeof remote?.score === 'number' ? remote.score : cat.score,
+      grade: remote?.grade ?? cat.grade,
+      locked: false,
+    };
+  });
 }
 
 export default AuditResultPage;

@@ -56,6 +56,22 @@
 .error {
   font-family: var(--font-body);
   font-size: 0.875rem;
-  color: var(--grade-f);
+  color: var(--bad, var(--grade-f));
   margin: 0;
+}
+
+.loadingLabel {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.5rem;
+}
+
+.spinner {
+  animation: emailGateSpin 1s linear infinite;
+}
+
+@keyframes emailGateSpin {
+  to {
+    transform: rotate(360deg);
+  }
 }

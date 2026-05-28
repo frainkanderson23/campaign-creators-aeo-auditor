@@ -50,7 +50,7 @@ export default async function AuditResultRoute({
   params,
   searchParams,
 }: PageProps) {
-  await params;
+  const { auditId } = await params;
   const sp = await searchParams;
   const state = resolveState(sp);
   const score = 62;
@@ -65,6 +65,7 @@ export default async function AuditResultRoute({
       grade={grade}
       domain={domain}
       categoryScores={categoryScores}
+      auditRequestId={auditId}
     />
   );
 }

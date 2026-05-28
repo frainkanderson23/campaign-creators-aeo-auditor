@@ -1,5 +1,6 @@
 import type { Metadata } from 'next';
 import { Plus_Jakarta_Sans, Outfit, JetBrains_Mono } from 'next/font/google';
+import { Toaster } from 'sonner';
 import { Header } from '@/components/layout/Header';
 import { Footer } from '@/components/layout/Footer';
 import './globals.css';
@@ -50,6 +51,7 @@ export default function RootLayout({
           </div>
         </main>
         <Footer />
+        <Toaster richColors position="top-right" />
       </body>
     </html>
   );
