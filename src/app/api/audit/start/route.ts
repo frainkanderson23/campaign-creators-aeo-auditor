@@ -37,7 +37,7 @@ const startSchema = z.object({
 
 const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
 
-function isBlockedHost(hostname: string): boolean {
+function isPrivateOrIP(hostname: string): boolean {
   const h = hostname.toLowerCase().replace(/^\[|\]$/g, '');
 
   if (h === 'localhost' || h === '::1' || h === '0.0.0.0') {
@@ -136,7 +136,7 @@ export async function POST(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Invalid URL' }, { status: 400 });
     }
 
-    if (isBlockedHost(hostname)) {
+    if (isPrivateOrIP(hostname)) {
       return NextResponse.json(
         { error: 'Invalid URL: private/local addresses are not permitted' },
         { status: 400 },
