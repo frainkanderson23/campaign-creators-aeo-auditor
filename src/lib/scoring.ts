@@ -1,4 +1,8 @@
-import type { RawFindings } from '@/src/types/audit';
+import type {
+  CrawlPage,
+  CrawlRobotsData,
+  RawFindings,
+} from '@/src/types/audit';
 
 export function getGrade(score: number): string {
   if (score < 0 || score > 100) {
@@ -84,4 +88,113 @@ export function scoreFreshness(findings: RawFindings | null | undefined): number
   if (ageDays <= 180) return clamp(50);
   if (ageDays <= 365) return clamp(30);
   return clamp(10);
+}
+
+export interface RunScorersInput {
+  crawledPages: CrawlPage[];
+  robotsData: CrawlRobotsData;
+  domainUrl: string;
+}
+
+export interface RunScorersResult {
+  answerability_score: number;
+  answerability_grade: string;
+  structure_score: number;
+  structure_grade: string;
+  trust_score: number;
+  trust_grade: string;
+  freshness_score: number;
+  freshness_grade: string;
+  brevity_score: number;
+  brevity_grade: string;
+  overall_score: number;
+  overall_grade: string;
+  raw_findings: RawFindings;
+}
+
+function deriveFindingsFromCrawl(input: RunScorersInput): RawFindings {
+  const pages = input.crawledPages;
+  const primary = pages.find((p) => p.fetchError === null) ?? pages[0] ?? null;
+
+  const robotsTxtAllowsAI =
+    !input.robotsData.gptBotDisallowed &&
+    !input.robotsData.claudeBotDisallowed &&
+    !input.robotsData.fullDisallowAll;
+
+  if (!primary) {
+    return {
+      url: input.domainUrl,
+      htmlSnapshot: '',
+      schemaMarkup: [],
+      internalLinks: [],
+      externalLinks: [],
+      wordCount: 0,
+      lastModified: null,
+      robotsTxtAllowsAI,
+      sitemapListed: false,
+      canonicalUrl: null,
+      openGraphPresent: false,
+      structuredDataTypes: [],
+    };
+  }
+
+  const internal = new Set<string>();
+  const external = new Set<string>();
+  const types = new Set<string>();
+  let words = 0;
+  let openGraph = false;
+  for (const page of pages) {
+    page.internalLinks.forEach((l) => internal.add(l));
+    page.externalLinks.forEach((l) => external.add(l));
+    page.structuredDataTypes.forEach((t) => types.add(t));
+    words += page.wordCount;
+    if (Object.keys(page.openGraphTags).length > 0) openGraph = true;
+  }
+
+  return {
+    url: primary.url,
+    htmlSnapshot: primary.bodyText,
+    schemaMarkup: Array.from(types),
+    internalLinks: Array.from(internal),
+    externalLinks: Array.from(external),
+    wordCount: words,
+    lastModified: null,
+    robotsTxtAllowsAI,
+    sitemapListed: false,
+    canonicalUrl: primary.canonicalUrl,
+    openGraphPresent: openGraph,
+    structuredDataTypes: Array.from(types),
+  };
+}
+
+export function runScorers(input: RunScorersInput): RunScorersResult {
+  const findings = deriveFindingsFromCrawl(input);
+  const ai_crawler = scoreAiCrawler(findings);
+  const schema = scoreSchema(findings);
+  const content_structure = scoreContentStructure(findings);
+  const authority = scoreAuthority(findings);
+  const freshness = scoreFreshness(findings);
+  const overall = computeOverallScore({
+    ai_crawler,
+    schema,
+    content_structure,
+    authority,
+    freshness,
+  });
+
+  return {
+    answerability_score: ai_crawler,
+    answerability_grade: getGrade(ai_crawler),
+    structure_score: content_structure,
+    structure_grade: getGrade(content_structure),
+    trust_score: authority,
+    trust_grade: getGrade(authority),
+    freshness_score: freshness,
+    freshness_grade: getGrade(freshness),
+    brevity_score: schema,
+    brevity_grade: getGrade(schema),
+    overall_score: overall,
+    overall_grade: getGrade(overall),
+    raw_findings: findings,
+  };
 }
