@@ -64,3 +64,31 @@ export interface AuditResult {
   insights: string[];
   lead?: Lead;
 }
+
+export interface CrawlPage {
+  url: string;
+  statusCode: number;
+  title: string | null;
+  metaDescription: string | null;
+  h1: string | null;
+  h2s: string[];
+  bodyText: string;
+  wordCount: number;
+  internalLinks: string[];
+  externalLinks: string[];
+  hasStructuredData: boolean;
+  structuredDataTypes: string[];
+  canonicalUrl: string | null;
+  robotsMeta: string | null;
+  openGraphTags: Record<string, string>;
+  fetchError: string | null;
+}
+
+export interface CrawlRobotsData {
+  raw: string;
+  gptBotDisallowed: boolean;
+  claudeBotDisallowed: boolean;
+  googlebotDisallowed: boolean;
+  bingbotDisallowed: boolean;
+  fullDisallowAll: boolean;
+}
