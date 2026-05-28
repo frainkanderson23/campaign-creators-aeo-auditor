@@ -4,43 +4,71 @@
   align-items: center;
   gap: 1.25rem;
   padding: 2.5rem 2rem;
-  border: 1px solid var(--color-border);
-  background-color: var(--color-surface);
+  border: 1px solid var(--line);
+  background-color: var(--tint-1);
   border-radius: var(--radius-xl);
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-2);
   text-align: center;
 }
 
-.blurred {
-  filter: blur(8px);
-  opacity: 0.5;
+.locked {
+  filter: blur(6px);
+  opacity: 0.65;
   pointer-events: none;
   user-select: none;
 }
 
 .domain {
-  font-family: var(--font-body);
+  font-family: var(--font-mono);
   font-size: 0.875rem;
-  color: var(--color-text-secondary);
+  color: var(--ink-3);
   letter-spacing: 0.04em;
   margin: 0;
 }
 
 .ringWrap {
+  position: relative;
   display: flex;
   align-items: center;
   justify-content: center;
 }
 
-.gradeBadge {
-  display: inline-flex;
-  align-items: center;
-  gap: 0.5rem;
-  padding: 0.375rem 0.875rem;
-  border-radius: var(--radius-full);
-  font-family: var(--font-display);
-  font-weight: 600;
-  font-size: 0.9375rem;
-  color: #ffffff;
+.ringBg {
+  stroke: var(--line);
+  transform: rotate(-90deg);
+  transform-origin: 130px 130px;
 }
 
+.ringFill {
+  transform: rotate(-90deg);
+  transform-origin: 130px 130px;
+}
+
+.ringInner {
+  position: absolute;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 0.375rem;
+}
+
+.scoreNum {
+  font-family: var(--font-mono);
+  font-size: 3rem;
+  font-weight: 700;
+  color: var(--ink);
+  line-height: 1;
+  font-variant-numeric: tabular-nums;
+}
+
+.scoreTotal {
+  font-size: 1.25rem;
+  color: var(--ink-3);
+  font-weight: 400;
+}
+
+.gradeBadge {
+  font-family: var(--font-sans);
+  font-size: 0.9375rem;
+  font-weight: 600;
+}

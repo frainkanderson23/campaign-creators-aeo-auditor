@@ -1,81 +1,105 @@
 # Design System
 
-All UI styles in this project must reference the design tokens and component classes defined in `src/app/globals.css`. Do not use raw Tailwind default colors, fonts, or spacing utilities for product UI (e.g. `text-gray-500`, `bg-blue-600`, `font-sans`). Tailwind layout utilities (flex, grid, spacing) are acceptable, but every color/typography/radius value must come from a token below.
+All UI styles in this project must reference the design tokens defined below. Do not use raw Tailwind default colors, fonts, or spacing utilities for product UI (e.g. `text-gray-500`, `bg-blue-600`, `font-sans`). Tailwind layout utilities (flex, grid, spacing) are acceptable, but every color/typography/radius value must come from a token below.
 
-## Color tokens
+## Handoff Tokens (source of truth)
 
-| Token                       | Value       | Usage                                |
-| --------------------------- | ----------- | ------------------------------------ |
-| `--color-primary`           | `#2563EB`   | Primary buttons, focus rings, links  |
-| `--color-secondary`         | `#6366F1`   | Secondary accents                    |
-| `--color-accent`            | `#EFF6FF`   | Subtle highlights / chips            |
-| `--color-background`        | `#FFFFFF`   | Card / surface background            |
-| `--color-text`              | `#111827`   | Primary text                         |
-| `--color-text-secondary`    | `#6B7280`   | Muted text, helper copy              |
-| `--color-border`            | `#E5E7EB`   | Hairline borders                     |
-| `--grade-a` … `--grade-f`   | greens→red  | Score / status / inline error states |
+These tokens come from `design/handoff/styles.css` and are registered as `:root` custom properties in `src/app/globals.css`. **These are the authoritative design tokens for all AEO Auditor pages.**
 
-Inline form errors use `--grade-f` (`#DC2626`). Success messages use `--grade-a` (`#16A34A`).
+### Color tokens
 
-## Typography tokens
+| Token             | Value       | Usage                                    |
+| ----------------- | ----------- | ---------------------------------------- |
+| `--primary`       | `#2563EB`   | Primary buttons, links, focus rings      |
+| `--primary-700`   | `#1D4ED8`   | Primary button hover state               |
+| `--primary-900`   | `#1E3A8A`   | Deep primary accent                      |
+| `--secondary`     | `#6366F1`   | Secondary buttons and accents            |
+| `--accent`        | `#EFF6FF`   | Subtle highlight / chip background       |
+| `--accent-2`      | `#F5F3FF`   | Secondary accent tint                    |
+| `--bg`            | `#FFFFFF`   | Page and card background                 |
+| `--tint-1`        | `#F8FAFF`   | Raised surface / alternate background    |
+| `--cream`         | `#FAF8F3`   | Warm tinted surface                      |
+| `--ink`           | `#15201f`   | Primary text                             |
+| `--ink-2`         | `#4A5568`   | Secondary / body text                    |
+| `--ink-3`         | `#7C8A98`   | Muted / placeholder text                 |
+| `--line`          | `#E5EAF0`   | Hairline borders                         |
+| `--line-strong`   | `#CDD5DF`   | Prominent borders                        |
+| `--good`          | `#10B981`   | Success / high-score indicator (A/B)     |
+| `--warn`          | `#F59E0B`   | Warning / mid-score indicator (C)        |
+| `--bad`           | `#EF4444`   | Error / low-score indicator (D/F)        |
 
-| Token            | Value              | Usage                          |
-| ---------------- | ------------------ | ------------------------------ |
-| `--font-display` | `DM Sans` fallback | Headings, hero copy            |
-| `--font-body`    | `Inter` fallback   | Body, labels, form controls    |
+### Typography tokens
 
-Both fonts are loaded via `next/font/google` in `src/app/layout.tsx`.
+| Token          | Value                                       | Usage                              |
+| -------------- | ------------------------------------------- | ---------------------------------- |
+| `--font-sans`  | `"Inter", ui-sans-serif, system-ui, ...`   | Body text, labels, UI copy         |
+| `--font-mono`  | `ui-monospace, "JetBrains Mono", ...`       | Code, scores, monospaced data      |
 
-## Radius tokens
+### Radius tokens
 
-| Token            | Value      | Usage                           |
-| ---------------- | ---------- | ------------------------------- |
-| `--radius-sm`    | `0.25rem`  | Small chips                     |
-| `--radius-md`    | `0.375rem` | Inputs, buttons (default 6px)   |
-| `--radius-lg`    | `0.5rem`   | Cards, surfaces                 |
-| `--radius-xl`    | `0.75rem`  | Hero surfaces                   |
-| `--radius-full`  | `9999px`   | Pills, avatars                  |
+| Token          | Value   | Usage                           |
+| -------------- | ------- | ------------------------------- |
+| `--radius-sm`  | `4px`   | Small chips                     |
+| `--radius-md`  | `6px`   | Inputs, buttons (default)       |
+| `--radius-lg`  | `10px`  | Cards, surfaces                 |
+| `--radius-xl`  | `14px`  | Hero surfaces                   |
 
-## Component classes
+### Shadow tokens
 
-These classes are defined globally in `src/app/globals.css`. Use them in JSX rather than re-deriving the styles from raw utilities.
+| Token        | Usage                                        |
+| ------------ | -------------------------------------------- |
+| `--shadow-1` | Cards at rest (subtle 1px)                   |
+| `--shadow-2` | Cards on hover, overlays (6px layered)       |
+| `--shadow-3` | Elevated CTAs and heroes (24px with blue tint) |
+
+## Component classes (global CSS in `src/app/globals.css`)
+
+These classes are available globally. Use them in JSX rather than re-deriving the styles from raw utilities.
 
 ### `.card`
 Surface container. White background, 1px border, `--radius-lg`, subtle shadow.
 
 ### `.input`
-Form input. Includes hover/focus/disabled/invalid states. Use `aria-invalid="true"` on the input to surface the inline error styling.
+Form input with hover/focus/disabled/invalid states. Use `aria-invalid="true"` for error styling.
 
 ### `.label`
 Form label. Pairs with `.input`. Use a real `<label htmlFor="…">`.
 
 ### `.btn` + variants
-- `.btn` — base button (typography, padding, radius, focus ring).
-- `.btn-primary` — primary action (filled with `--color-primary`).
-- `.btn-block` — full-width modifier.
-
-Disabled buttons should set the `disabled` attribute; styling is automatic.
+- `.btn` — base button (typography, padding, radius, focus ring)
+- `.btn-primary` — primary action (filled with `--primary`)
+- `.btn-cta` — CTA button (filled with `--secondary`)
+- `.btn-block` — full-width modifier
 
 ### `.form-error`
-Inline error text near a form. Color: `--grade-f`. Use `role="alert"`.
+Inline error text. Color: `--bad`. Use `role="alert"`.
 
 ### `.form-success`
-Inline success / confirmation text. Color: `--grade-a`.
+Inline success / confirmation text. Color: `--good`.
 
 ### `.muted`
-Secondary / helper text. Color: `--color-text-secondary`.
+Secondary / helper text. Color: `--ink-2`.
 
 ### `.heading-display`
-Display heading using `--font-display`, semibold, tight letter-spacing.
+Display heading using `--font-sans`, bold, tight letter-spacing.
+
+## Legacy compatibility tokens
+
+The following tokens are also available in `src/app/globals.css` for backward compatibility with auth pages. New AEO UI should prefer the handoff tokens above.
+
+| Legacy token                | Handoff equivalent  |
+| --------------------------- | ------------------- |
+| `--color-primary`           | `--primary`         |
+| `--color-secondary`         | `--secondary`       |
+| `--color-accent`            | `--accent`          |
+| `--color-surface`           | `--tint-1`          |
+| `--color-text`              | `--ink`             |
+| `--color-text-secondary`    | `--ink-2`           |
+| `--color-border`            | `--line`            |
+| `--grade-a` … `--grade-f`   | `--good` / `--warn` / `--bad` |
 
 ## Focus & error states
 
-- **Focus:** `.btn` and `.input` show a 3px ring derived from `--color-primary`. Do not override.
-- **Error:** Inputs with `aria-invalid="true"` get a red border and red focus ring derived from `--grade-f`.
-- Always pair an inline `.form-error` (with `role="alert"`) with the relevant field, rather than using `alert()` or toast popups.
-
-## Authentication pages
-
-`/auth/login` and `/auth/signup` are Client Components that use `createSupabaseBrowser` from `src/lib/supabase/browser.ts`. They follow the patterns above: `.card` wrapper, `.label` + `.input` pairs, `.btn .btn-primary .btn-block` submit, `.form-error` for inline errors, `.form-success` for the signup confirmation message.
-
-The signup page is gated behind `NEXT_PUBLIC_SIGNUP_ENABLED`. When the env var is not `'true'`, the form is replaced with a `.muted` invite-only message.
+- **Focus:** Buttons and inputs show a `3px rgba(37, 99, 235, 0.35)` ring. Do not override.
+- **Error:** Inputs with `aria-invalid="true"` get a `--bad` border and focus ring.
+- Always pair an inline `.form-error` (with `role="alert"`) with the relevant field.

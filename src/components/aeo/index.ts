@@ -8,9 +8,8 @@ export { EmailGateOverlay } from './EmailGateOverlay';
 export type { EmailGateOverlayProps } from './EmailGateOverlay';
 
 export { ConsultationCTA } from './ConsultationCTA';
-export type { ConsultationCTAProps } from './ConsultationCTA';
 
 export { AuditForm } from './AuditForm';
 
 export { AuditResultPage } from './AuditResultPage';
-export type { AuditState, CategoryScore } from './AuditResultPage';
+export type { AuditResultPageProps } from './AuditResultPage';
