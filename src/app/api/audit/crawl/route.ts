@@ -390,6 +390,12 @@ export async function POST(req: NextRequest): Promise<Response> {
       const page = await crawlSinglePage(candidates[i], originHost);
       if (page === null) continue;
       crawledPages.push(page);
+      // Feed discovered internal links back into the candidate queue
+      if (page.internalLinks) {
+        for (const link of page.internalLinks) {
+          pushCandidate(link);
+        }
+      }
     }
 
     const scored = runScorers({ crawledPages, robotsData, domainUrl });
