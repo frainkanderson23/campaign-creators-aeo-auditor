@@ -47,7 +47,7 @@ export default async function AuditResultRoute({ params }: PageProps) {
           Audit not found
         </h2>
         <p style={{ color: '#6b7280', marginTop: '0.5rem' }}>
-          The audit ID you provided doesn't exist or has expired.
+          The audit ID you provided doesn&apos;t exist or has expired.
         </p>
       </div>
     );
@@ -73,7 +73,7 @@ export default async function AuditResultRoute({ params }: PageProps) {
           Audit in progress…
         </h2>
         <p style={{ color: '#6b7280', marginTop: '0.5rem', maxWidth: 360, margin: '0.5rem auto 0' }}>
-          We're analysing <strong>
+          We&apos;re analysing <strong>
             {(() => { try { return new URL(requestData.url).hostname; } catch { return requestData.url; } })()}
           </strong> across all AEO dimensions. This usually takes 30–60 seconds.
         </p>
@@ -104,7 +104,7 @@ export default async function AuditResultRoute({ params }: PageProps) {
   const { data: resultRaw } = await supabase
     .from('audit_results')
     .select(
-      'id, audit_request_id, overall_score, overall_grade, answerability_score, answerability_grade, brevity_score, brevity_grade, trust_score, trust_grade, structure_score, structure_grade, freshness_score, freshness_grade, created_at',
+      'id, audit_request_id, overall_score, overall_grade, answerability_score, answerability_grade, brevity_score, brevity_grade, trust_score, trust_grade, structure_score, structure_grade, freshness_score, freshness_grade, raw_findings, created_at',
     )
     .eq('audit_request_id', auditId)
     .maybeSingle();
