@@ -88,10 +88,29 @@
   font-weight: 500;
   color: #fff;
   cursor: pointer;
+  text-decoration: none;
+  display: inline-flex;
+  align-items: center;
 }
 
 .btnPrimary:hover {
   background: #1F2937;
+}
+
+.copiedToast {
+  position: absolute;
+  top: calc(100% + 6px);
+  left: 50%;
+  transform: translateX(-50%);
+  background: #111827;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 500;
+  padding: 4px 10px;
+  border-radius: 6px;
+  white-space: nowrap;
+  pointer-events: none;
+  z-index: 10;
 }
 
 /* ─── Score Hero ─────────────────────────────────────────── */
@@ -564,6 +583,13 @@
 
 .ctaBtnSecondary:hover {
   background: rgba(255, 255, 255, 0.25);
+}
+
+/* ─── Print styles ──────────────────────────────────────── */
+@media print {
+  .auditHeader button,
+  .auditHeader a,
+  .ctaCard { display: none; }
 }
 
 /* ─── Responsive ────────────────────────────────────────── */
