@@ -57,7 +57,7 @@
   color: #6B7280;
 }
 
-.auditActions {
+.headerButtons {
   display: flex;
   gap: 8px;
   align-items: center;
@@ -628,4 +628,9 @@
     flex-direction: column;
     align-items: flex-start;
   }
+}
+
+@media print {
+  .headerButtons,
+  .ctaCard { display: none !important; }
 }

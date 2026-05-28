@@ -185,6 +185,7 @@ function getFreshnessFindings(rf: RawFindings): FindingItem[] {
 export default function AuditResultPage({ requestData, auditData }: Props) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [expandedDim, setExpandedDim] = useState<string | null>(null);
+  const [copied, setCopied] = useState(false);
   const rafRef = useRef<number | null>(null);
 
   const domain = requestData.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -265,10 +266,19 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
               <span>ID: {auditData.id.slice(0, 8)}</span>
             </div>
           </div>
-          <div className={styles.auditActions}>
-            <button className={styles.btnSecondary}>Share</button>
-            <button className={styles.btnSecondary}>Download PDF</button>
-            <button className={styles.btnPrimary}>New audit</button>
+          <div className={styles.headerButtons}>
+            <button
+              className={styles.btnSecondary}
+              onClick={() => {
+                navigator.clipboard.writeText(window.location.href);
+                setCopied(true);
+                setTimeout(() => setCopied(false), 2000);
+              }}
+            >
+              {copied ? 'Link copied!' : 'Share'}
+            </button>
+            <button className={styles.btnSecondary} onClick={() => window.print()}>Download PDF</button>
+            <a href="/" className={styles.btnPrimary}>New audit</a>
           </div>
         </div>
 
