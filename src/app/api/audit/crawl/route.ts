@@ -14,7 +14,7 @@ const crawlSchema = z.object({
   domainUrl: z.string().url(),
 });
 
-const MAX_PAGES = 5;
+const MAX_PAGES = 20;
 const MAX_H2 = 10;
 const MAX_BODY_CHARS = 5000;
 const MAX_LINKS_PER_PAGE = 20;
