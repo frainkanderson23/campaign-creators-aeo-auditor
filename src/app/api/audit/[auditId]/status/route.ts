@@ -1,23 +1,20 @@
 import { NextResponse, type NextRequest } from 'next/server';
-import { createClient } from '@supabase/supabase-js';
-import {
-  generatePreviewInsights,
-  type Categories,
-  type CategoryFinding,
-} from '@/src/lib/audit/insights';
+import { createClient, type SupabaseClient } from '@supabase/supabase-js';
+import { generatePreviewInsights } from '@/src/lib/audit/insights';
+import type { RawFindings } from '@/src/types/audit';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 
-let _supabase: ReturnType<typeof createClient> | null = null;
-function getSupabase(): ReturnType<typeof createClient> {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!,
-      process.env.SUPABASE_SERVICE_ROLE_KEY!,
+let client: SupabaseClient | undefined;
+function getSupabase(): SupabaseClient {
+  if (!client) {
+    client = createClient(
+      process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
+      process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
     );
   }
-  return _supabase;
+  return client;
 }
 
 const UUID_REGEX =
@@ -28,38 +25,31 @@ type AuditStatus = 'pending' | 'processing' | 'complete' | 'failed';
 interface AuditRequestRow {
   id: string;
   status: AuditStatus;
-  domain_url: string;
-  error: string | null;
+  url: string;
 }
 
 interface AuditResultRow {
-  category: string;
-  score: number;
-  findings: CategoryFinding[] | null;
+  answerability_score: number | null;
+  answerability_grade: string | null;
+  structure_score: number | null;
+  structure_grade: string | null;
+  trust_score: number | null;
+  trust_grade: string | null;
+  freshness_score: number | null;
+  freshness_grade: string | null;
+  brevity_score: number | null;
+  brevity_grade: string | null;
+  overall_score: number | null;
+  overall_grade: string | null;
+  raw_findings: RawFindings | null;
 }
 
-interface PendingResponse {
-  auditId: string;
-  status: 'pending' | 'processing';
-  domain_url: string;
+interface CategoryEntry {
+  score: number | null;
+  grade: string | null;
 }
 
-interface FailedResponse {
-  auditId: string;
-  status: 'failed';
-  domain_url: string;
-  error: string | null;
-}
-
-interface CompleteResponse {
-  auditId: string;
-  status: 'complete';
-  domain_url: string;
-  categories: Categories;
-  preview_insights: string[];
-}
-
-type StatusResponse = PendingResponse | FailedResponse | CompleteResponse;
+type Categories = Record<string, CategoryEntry>;
 
 export async function GET(
   _request: NextRequest,
@@ -73,9 +63,10 @@ export async function GET(
 
   try {
     const supabase = getSupabase();
-    const { data: row, error: requestError } = await supabase
+
+    const { data: requestData, error: requestError } = await supabase
       .from('audit_requests')
-      .select('id, status, domain_url, error')
+      .select('id, status, url')
       .eq('id', auditId)
       .maybeSingle();
 
@@ -86,35 +77,37 @@ export async function GET(
       );
     }
 
-    if (!row) {
+    if (!requestData) {
       return NextResponse.json({ error: 'Audit not found' }, { status: 404 });
     }
 
-    const audit = row as unknown as AuditRequestRow;
+    const audit = requestData as unknown as AuditRequestRow;
+    const domain_url = audit.url;
 
     if (audit.status === 'pending' || audit.status === 'processing') {
-      const response: PendingResponse = {
+      return NextResponse.json({
         auditId,
         status: audit.status,
-        domain_url: audit.domain_url,
-      };
-      return NextResponse.json(response);
+        domain_url,
+      });
     }
 
     if (audit.status === 'failed') {
-      const response: FailedResponse = {
+      return NextResponse.json({
         auditId,
         status: 'failed',
-        domain_url: audit.domain_url,
-        error: audit.error,
-      };
-      return NextResponse.json(response);
+        domain_url,
+        error: null,
+      });
     }
 
-    const { data: resultRows, error: resultsError } = await supabase
+    const { data: resultData, error: resultsError } = await supabase
       .from('audit_results')
-      .select('category, score, findings')
-      .eq('audit_request_id', auditId);
+      .select(
+        'answerability_score, answerability_grade, structure_score, structure_grade, trust_score, trust_grade, freshness_score, freshness_grade, brevity_score, brevity_grade, overall_score, overall_grade, raw_findings',
+      )
+      .eq('audit_request_id', auditId)
+      .maybeSingle();
 
     if (resultsError) {
       return NextResponse.json(
@@ -123,25 +116,44 @@ export async function GET(
       );
     }
 
-    const categories: Categories = {};
-    for (const r of (resultRows ?? []) as unknown as AuditResultRow[]) {
-      if (!r || typeof r.category !== 'string') continue;
-      categories[r.category] = {
-        score: typeof r.score === 'number' ? r.score : 0,
-        findings: Array.isArray(r.findings) ? r.findings : [],
-      };
+    if (!resultData) {
+      return NextResponse.json(
+        { error: 'Audit result data not found' },
+        { status: 500 },
+      );
     }
 
-    const preview_insights = generatePreviewInsights(categories).slice(0, 3);
+    const result = resultData as unknown as AuditResultRow;
 
-    const response: CompleteResponse = {
+    const categories: Categories = {
+      answerability: {
+        score: result.answerability_score,
+        grade: result.answerability_grade,
+      },
+      structure: {
+        score: result.structure_score,
+        grade: result.structure_grade,
+      },
+      trust: { score: result.trust_score, grade: result.trust_grade },
+      freshness: {
+        score: result.freshness_score,
+        grade: result.freshness_grade,
+      },
+      brevity: { score: result.brevity_score, grade: result.brevity_grade },
+      overall: { score: result.overall_score, grade: result.overall_grade },
+    };
+
+    const preview_insights = result.raw_findings
+      ? generatePreviewInsights(result.raw_findings).slice(0, 3)
+      : [];
+
+    return NextResponse.json({
       auditId,
       status: 'complete',
-      domain_url: audit.domain_url,
+      domain_url,
       categories,
       preview_insights,
-    };
-    return NextResponse.json(response);
+    });
   } catch {
     return NextResponse.json(
       { error: 'Internal server error' },
@@ -149,5 +161,3 @@ export async function GET(
     );
   }
 }
-
-export type { StatusResponse };
