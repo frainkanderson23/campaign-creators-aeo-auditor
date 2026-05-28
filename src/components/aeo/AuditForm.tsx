@@ -1,55 +1,100 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import { useState, useRef, type FormEvent } from 'react';
 import styles from './AuditForm.module.css';
 
-export function AuditForm() {
-  const [url, setUrl] = useState('');
-  const [error, setError] = useState<string | null>(null);
+function ArrowIcon() {
+  return (
+    <svg
+      width="16"
+      height="16"
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      strokeWidth="2"
+      strokeLinecap="round"
+      strokeLinejoin="round"
+      aria-hidden="true"
+    >
+      <path d="M5 12h14" />
+      <path d="m12 5 7 7-7 7" />
+    </svg>
+  );
+}
 
-  function handleSubmit(event: FormEvent<HTMLFormElement>) {
-    event.preventDefault();
-    if (!url.trim()) {
-      setError('Please enter your website URL');
-      return;
-    }
-    setError(null);
-    console.log(url);
+function cleanDomain(raw: string): string {
+  return raw
+    .trim()
+    .replace(/^https?:\/\//i, '')
+    .replace(/^www\./i, '')
+    .replace(/\/.*$/, '')
+    .toLowerCase();
+}
+
+function isValidDomain(domain: string): boolean {
+  return /^[a-z0-9][a-z0-9-]*(\.[a-z0-9-]+)+$/.test(domain);
+}
+
+export function AuditForm() {
+  const [domain, setDomain] = useState('');
+  const [touched, setTouched] = useState(false);
+  const inputRef = useRef<HTMLInputElement>(null);
+
+  const clean = cleanDomain(domain);
+  const valid = isValidDomain(clean);
+  const showError = touched && domain.length > 0 && !valid;
+
+  function handleSubmit(e: FormEvent<HTMLFormElement>) {
+    e.preventDefault();
+    setTouched(true);
+    if (!valid) return;
+    // TODO: redirect to /audit?domain=<clean>
+    console.log('auditing:', clean);
   }
 
   return (
-    <form className={styles.form} onSubmit={handleSubmit} noValidate>
-      <label htmlFor="audit-url" className={styles.srOnly}>
-        Website URL
-      </label>
-      <input
-        id="audit-url"
-        type="url"
-        autoFocus
-        autoComplete="off"
-        spellCheck={false}
-        autoCapitalize="off"
-        placeholder="https://yourbusiness.com"
-        value={url}
-        onChange={(e) => {
-          setUrl(e.target.value);
-          if (error) setError(null);
-        }}
-        aria-invalid={error ? true : undefined}
-        aria-describedby={error ? 'audit-url-error' : undefined}
-        className={styles.input}
-      />
-
-      <button type="submit" className={styles.submit}>
-        Analyze My AEO Score
-      </button>
-
-      {error && (
-        <p id="audit-url-error" role="alert" className={styles.error}>
-          {error}
+    <div className={styles.wrap}>
+      <form
+        className={`${styles.form}${showError ? ' ' + styles.formInvalid : ''}`}
+        onSubmit={handleSubmit}
+        noValidate
+      >
+        <label htmlFor="audit-url" className={styles.srOnly}>
+          Website domain
+        </label>
+        <span className={styles.prefix} aria-hidden="true">
+          https://
+        </span>
+        <input
+          id="audit-url"
+          ref={inputRef}
+          type="text"
+          autoComplete="off"
+          spellCheck={false}
+          autoCapitalize="off"
+          placeholder="yourcompany.com"
+          value={domain}
+          onChange={(e) => setDomain(e.target.value)}
+          onBlur={() => setTouched(true)}
+          aria-invalid={showError ? true : undefined}
+          aria-describedby={showError ? 'audit-url-error' : undefined}
+          className={styles.input}
+        />
+        <button
+          type="submit"
+          className={styles.submit}
+          disabled={showError}
+          aria-label="Audit my site"
+        >
+          Audit my site <ArrowIcon />
+        </button>
+      </form>
+      {showError && (
+        <p id="audit-url-error" role="alert" className={styles.errorMsg}>
+          ↑ Enter a valid domain (e.g. example.com)
         </p>
       )}
-    </form>
+    </div>
   );
 }
 
