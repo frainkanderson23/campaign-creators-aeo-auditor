@@ -5,15 +5,12 @@ import { AuditResultPage, type AuditRequestRow, type AuditResultRow } from '@/co
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
 
-let _supabase: ReturnType<typeof createClient> | undefined;
 function getSupabase() {
-  if (!_supabase) {
-    _supabase = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
-      process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
-    );
-  }
-  return _supabase;
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  );
 }
 
 type PageProps = { params: Promise<{ auditId: string }> };
@@ -39,11 +36,11 @@ export default async function AuditResultRoute({ params }: PageProps) {
 
   const { data: requestRaw } = await supabase
     .from('audit_requests')
-    .select('id, url, status, email, created_at')
+    .select('id, url, status, created_at')
     .eq('id', auditId)
     .maybeSingle();
 
-  if (!requestRaw) {
+  console.error("QUERY_RESULT:", JSON.stringify({ requestRaw, auditId })); if (!requestRaw) {
     return (
       <div style={{ textAlign: 'center', padding: '6rem 1rem' }}>
         <h2 style={{ fontSize: '1.25rem', fontWeight: 600, color: '#374151' }}>
