@@ -1,64 +1,148 @@
 name: Nexus Build Agent
 on:
+  issues:
+    types: [opened]
   issue_comment:
     types: [created]
+
 permissions:
   contents: write
   pull-requests: write
   issues: write
   id-token: write
+
 jobs:
   nexus-build:
-    if: contains(github.event.comment.body, '@claude')
+    if: |
+      (github.event_name == 'issues' && contains(github.event.issue.labels.*.name, 'nexus-build')) ||
+      (github.event_name == 'issue_comment' && contains(github.event.comment.body, '@claude'))
     runs-on: ubuntu-latest
     timeout-minutes: 30
     steps:
       - uses: actions/checkout@v4
         with:
           fetch-depth: 0
-          token: ${{ secrets.GH_PAT_TOKEN }}
       - uses: anthropics/claude-code-action@v1
         with:
-          anthropic_api_key: ${{ secrets.ANTHROPIC_API_KEY }}
-          claude_args: "--dangerously-skip-permissions --max-turns 60"
-          github_token: ${{ secrets.GH_PAT_TOKEN }}
-      - name: Auto-create and merge PR
+          claude_code_oauth_token: ${{ secrets.CLAUDE_CODE_OAUTH_TOKEN }}
+          claude_args: "--dangerously-skip-permissions --max-turns 40"
+      - name: Re-authenticate git after claude-code-action
+        if: always()
+        env:
+          GH_TOKEN_RAW: ${{ github.token }}
+        run: |
+          # claude-code-action revokes its git token on cleanup. All
+          # subsequent git ops (Gate 2 fetch, Auto-create PR) need fresh auth.
+          #
+          # Why not just insteadOf? Two earlier attempts — unset extraheader
+          # + insteadOf rewrite — kept failing with "Invalid username or
+          # token. Password authentication is not supported for Git
+          # operations. fatal: Authentication failed". The insteadOf rule
+          # writes to the HOME .gitconfig, but actions/checkout@v4 uses a
+          # temp HOME during its own config writes; whether my insteadOf
+          # persists into Gate 2's shell is not reliable across GitHub
+          # Actions runner quirks.
+          #
+          # This approach is idempotent and proven: directly overwrite the
+          # extraheader at --local scope (the same scope actions/checkout
+          # used to set it) with a fresh github.token. No cross-scope
+          # lookup, no credential helper caching, no global insteadOf
+          # dependency. Just replace the bad token with a good one in the
+          # exact place git looks first.
+          basic_auth=$(printf 'x-access-token:%s' "$GH_TOKEN_RAW" | base64 -w0)
+          git config --local http.https://github.com/.extraheader "AUTHORIZATION: basic $basic_auth"
+          # Belt-and-suspenders: also unset any stale --global extraheader
+          # that claude-code-action might have written, and keep the
+          # insteadOf rewrite as a fallback.
+          git config --global --unset-all http.https://github.com/.extraheader 2>/dev/null || true
+          git config --global url."https://x-access-token:$GH_TOKEN_RAW@github.com/".insteadOf "https://github.com/"
+      - name: GATE 2 — verify dependency resolution (no legacy-peer-deps)
         if: success()
         env:
-          GH_TOKEN: ${{ secrets.GH_PAT_TOKEN }}
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # Vercel runs npm install WITHOUT --legacy-peer-deps by default. If the
+          # Build Agent pins a package that conflicts with an existing peer, the
+          # Vercel deploy will fail with ERESOLVE and the PR's auto-merge (Gate
+          # 4) will block. Catch that conflict in GitHub Actions — before the
+          # PR is even opened — so the FIX cycle sees the error quickly.
+          set -o pipefail
+          ISSUE_NUM=${{ github.event.issue.number }}
+          CLAUDE_BRANCH=""
+          for attempt in 1 2 3 4 5 6; do
+            CLAUDE_BRANCH=$(gh api "repos/${{ github.repository }}/git/matching-refs/heads/claude%2Fissue-${ISSUE_NUM}-" --jq '.[].ref | sub("refs/heads/"; "")' 2>/dev/null | sort -r | head -1)
+            if [ -n "$CLAUDE_BRANCH" ]; then break; fi
+            echo "waiting for claude branch (attempt $attempt)..."
+            sleep 15
+          done
+          if [ -z "$CLAUDE_BRANCH" ]; then
+            echo "No claude branch found after 90s — the Build Agent did not commit. Skipping dep-resolution check."
+            exit 0
+          fi
+          echo "Checking dep resolution on $CLAUDE_BRANCH"
+          git fetch --quiet origin "$CLAUDE_BRANCH"
+          git checkout --quiet "$CLAUDE_BRANCH"
+          rm -rf node_modules package-lock.json
+          set +e
+          npm install --no-audit --no-fund 2>&1 | tee /tmp/install.log
+          install_status=${PIPESTATUS[0]}
+          set -e
+          if grep -q ERESOLVE /tmp/install.log; then
+            echo "::error::GATE 2 FAILED — Dependency resolution conflict (ERESOLVE). Vercel will not install. Review peer-dep pins. Most common cause on Next 14: eslint@9 against eslint-config-next which pins eslint@^7||^8."
+            echo "--- last 40 log lines ---"
+            tail -40 /tmp/install.log
+            exit 1
+          fi
+          if [ $install_status -ne 0 ]; then
+            echo "::error::GATE 2 FAILED — npm install exited with status $install_status (not ERESOLVE). Inspect log for missing dependencies, auth, or registry issues."
+            echo "--- last 40 log lines ---"
+            tail -40 /tmp/install.log
+            exit 1
+          fi
+          echo "✓ GATE 2 — dependencies resolve cleanly without --legacy-peer-deps"
+
+          # GATE 2b — recharts peer-dep companion check. recharts imports
+          # react-is internally but does not list it in its own dependencies,
+          # so npm does not hoist it. Without it, `next build` fails with
+          # "Module not found: Can't resolve 'react-is'". Enforce it here
+          # before the PR is even opened so the FIX cycle sees the error as
+          # "add react-is" rather than as a generic build failure.
+          if grep -q '"recharts"' package.json; then
+            if ! grep -q '"react-is"' package.json; then
+              echo "::error::GATE 2b FAILED — recharts is in package.json but react-is is missing. recharts requires react-is as a peer dep (but doesn't declare it). Add react-is and @types/react-is to dependencies, then push again. npm install react-is @types/react-is"
+              exit 1
+            fi
+            echo "✓ GATE 2b — recharts + react-is both present"
+          fi
+      - name: Auto-create PR
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
         run: |
           ISSUE_NUM=${{ github.event.issue.number }}
           TITLE=$(echo '${{ github.event.issue.title }}' | sed 's/NEXUS BUILD: //')
+          # Use git/matching-refs with retry — the /branches endpoint has known
+          # eventual-consistency lag that causes PRs to silently not open when
+          # the branch was pushed seconds before this step runs.
           CLAUDE_BRANCH=""
-          for ATTEMPT in 1 2 3; do
-            CLAUDE_BRANCH=$(gh api "repos/${{ github.repository }}/git/matching-refs/heads/claude/issue-${ISSUE_NUM}-" --jq '.[].ref' 2>/dev/null | sed 's|refs/heads/||' | sort -r | head -1)
+          for attempt in 1 2 3 4 5 6; do
+            CLAUDE_BRANCH=$(gh api "repos/${{ github.repository }}/git/matching-refs/heads/claude%2Fissue-${ISSUE_NUM}-" --jq '.[].ref | sub("refs/heads/"; "")' 2>/dev/null | sort -r | head -1)
             if [ -n "$CLAUDE_BRANCH" ]; then
               break
             fi
-            echo "Attempt ${ATTEMPT}: no branch found, waiting 10s..."
-            sleep 10
+            echo "Attempt $attempt: no branch yet, waiting 15s..."
+            sleep 15
           done
           echo "Found branch: ${CLAUDE_BRANCH:-none}"
-          if [ -n "$CLAUDE_BRANCH" ]; then
-            echo "Creating PR for branch: $CLAUDE_BRANCH"
-            PR_URL=$(gh pr create \
-              --repo "${{ github.repository }}" \
-              --base main \
-              --head "$CLAUDE_BRANCH" \
-              --title "feat(nexus): $TITLE" \
-              --body "Automated cloud build from issue #${ISSUE_NUM}
-          Closes #${ISSUE_NUM}
-          Generated by Nexus Hub — claude-code-action" \
-              2>&1) || true
-            if echo "$PR_URL" | grep -q "already exists"; then
-              PR_URL=$(gh pr list --repo "${{ github.repository }}" --head "$CLAUDE_BRANCH" --json url --jq '.[0].url')
-            fi
-            if [ -n "$PR_URL" ] && echo "$PR_URL" | grep -q "github.com"; then
-              echo "Merging PR: $PR_URL"
-              sleep 10
-              gh pr merge "$PR_URL" --squash --auto --delete-branch \
-                || echo "Auto-merge enabled or merge failed -- PR may need manual review"
-            fi
+          if [ -z "$CLAUDE_BRANCH" ]; then
+            echo "::error::No Claude branch found for issue #${ISSUE_NUM} after 6 attempts. The build did not commit code."
+            exit 1
+          fi
+          echo "Creating PR for branch: $CLAUDE_BRANCH"
+          # Do not swallow errors — a failed gh pr create must surface so the
+          # webhook/QA pipeline does not mark the task done against an empty PR.
+          if gh pr view "$CLAUDE_BRANCH" --json number 2>/dev/null | grep -q '"number"'; then
+            echo "PR for $CLAUDE_BRANCH already exists — skipping"
           else
-            echo "No Claude branch found for issue #${ISSUE_NUM} after 3 attempts"
+            gh pr create --base main --head "$CLAUDE_BRANCH" --title "feat(nexus): $TITLE" --body "Automated cloud build from issue #${ISSUE_NUM}. Closes #${ISSUE_NUM}. Generated by Nexus Hub — claude-code-action"
           fi
