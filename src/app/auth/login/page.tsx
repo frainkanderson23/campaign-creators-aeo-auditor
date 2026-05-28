@@ -1,8 +1,10 @@
 'use client';
 
-import { useState, type FormEvent } from 'react';
+import Link from 'next/link';
 import { useRouter } from 'next/navigation';
+import { useState, type FormEvent } from 'react';
 import { createSupabaseBrowser } from '@/lib/supabase/browser';
+import styles from '../auth.module.css';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -33,16 +35,25 @@ export default function LoginPage() {
   }
 
   return (
-    <main className="flex flex-1 items-center justify-center px-6 py-16">
-      <div className="card w-full max-w-md">
-        <header className="mb-6 space-y-2">
-          <h1 className="heading-display text-2xl">Sign in</h1>
-          <p className="muted text-sm">Welcome back. Sign in to continue.</p>
-        </header>
+    <section className={styles.page}>
+      <div className={styles.bg} aria-hidden="true">
+        <div className={styles.grid} />
+      </div>
 
-        <form onSubmit={onSubmit} noValidate className="space-y-4">
-          <div>
-            <label htmlFor="email" className="label">
+      <div className={styles.card}>
+        <span className={styles.eyebrow}>
+          <span className={styles.eyebrowDot} aria-hidden="true" />
+          AEO Auditor
+        </span>
+
+        <h1 className={styles.title}>Welcome back</h1>
+        <p className={styles.subtitle}>
+          Sign in to review your audits and pick up where you left off.
+        </p>
+
+        <form className={styles.form} onSubmit={onSubmit} noValidate>
+          <div className={styles.field}>
+            <label htmlFor="email" className={styles.label}>
               Email
             </label>
             <input
@@ -55,12 +66,14 @@ export default function LoginPage() {
               onChange={(e) => setEmail(e.target.value)}
               disabled={submitting}
               aria-invalid={error ? true : undefined}
-              className="input"
+              aria-describedby={error ? 'login-error' : undefined}
+              className={styles.input}
+              placeholder="you@company.com"
             />
           </div>
 
-          <div>
-            <label htmlFor="password" className="label">
+          <div className={styles.field}>
+            <label htmlFor="password" className={styles.label}>
               Password
             </label>
             <input
@@ -73,25 +86,33 @@ export default function LoginPage() {
               onChange={(e) => setPassword(e.target.value)}
               disabled={submitting}
               aria-invalid={error ? true : undefined}
-              className="input"
+              aria-describedby={error ? 'login-error' : undefined}
+              className={styles.input}
             />
           </div>
 
           {error && (
-            <p className="form-error" role="alert">
+            <p id="login-error" role="alert" className={styles.error}>
               {error}
             </p>
           )}
 
-          <button
-            type="submit"
-            disabled={submitting}
-            className="btn btn-primary btn-block"
-          >
-            {submitting ? 'Signing in…' : 'Sign in'}
+          <button type="submit" disabled={submitting} className={styles.submit}>
+            {submitting ? (
+              <>
+                <span className={styles.spinner} aria-hidden="true" />
+                Signing in…
+              </>
+            ) : (
+              'Sign in'
+            )}
           </button>
         </form>
+
+        <div className={styles.foot}>
+          New here? <Link href="/auth/signup">Create an account</Link>
+        </div>
       </div>
-    </main>
+    </section>
   );
 }
