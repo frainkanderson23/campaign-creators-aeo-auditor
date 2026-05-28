@@ -1,8 +1,10 @@
 .page {
   display: flex;
   flex-direction: column;
-  gap: 1.5rem;
+  gap: var(--space-card);
   width: 100%;
+  padding-top: var(--space-section);
+  padding-bottom: var(--space-section);
 }
 
 .cardGrid {
@@ -11,13 +13,13 @@
   gap: 1rem;
 }
 
-@media (min-width: 640px) {
+@media (min-width: 768px) {
   .cardGrid {
     grid-template-columns: repeat(2, 1fr);
   }
 }
 
-@media (min-width: 960px) {
+@media (min-width: 1024px) {
   .cardGrid {
     grid-template-columns: repeat(3, 1fr);
   }

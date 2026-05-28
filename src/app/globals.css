@@ -43,6 +43,17 @@
   --transition-fast:   120ms ease;
   --transition-base:   150ms ease;
   --transition-slow:   240ms ease;
+
+  /* Responsive spacing (sourced from design/handoff/styles.css scale) */
+  --space-section:  48px;
+  --space-card:     16px;
+}
+
+@media (min-width: 768px) {
+  :root {
+    --space-section: 80px;
+    --space-card:    24px;
+  }
 }
 
 @theme inline {
