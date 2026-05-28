@@ -1,6 +1,7 @@
 import type { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
 import AuditResultPage from '@/components/aeo/AuditResultPage';
+import AuditProgress from '@/components/aeo/AuditProgress';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -56,31 +57,13 @@ export default async function AuditResultRoute({ params }: PageProps) {
   const requestData = requestRaw as any;
 
   if (requestData.status === 'pending' || requestData.status === 'processing') {
+    const domain = (() => {
+      try { return new URL(requestData.url).hostname; } catch { return requestData.url; }
+    })();
     return (
       <>
-      <meta httpEquiv="refresh" content="3" />
-      <div style={{ textAlign: 'center', padding: '6rem 1rem' }}>
-        <div style={{ marginBottom: '1.5rem' }}>
-          <svg
-            style={{ animation: 'spin 1s linear infinite', width: 48, height: 48, color: '#1d4ed8', margin: '0 auto', display: 'block' }}
-            viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2}
-          >
-            <path d="M12 2a10 10 0 0 1 10 10" strokeLinecap="round" />
-          </svg>
-          <style>{`@keyframes spin { to { transform: rotate(360deg); } }`}</style>
-        </div>
-        <h2 style={{ fontSize: '1.35rem', fontWeight: 700, color: '#111827' }}>
-          Audit in progress…
-        </h2>
-        <p style={{ color: '#6b7280', marginTop: '0.5rem', maxWidth: 360, margin: '0.5rem auto 0' }}>
-          We&apos;re analysing <strong>
-            {(() => { try { return new URL(requestData.url).hostname; } catch { return requestData.url; } })()}
-          </strong> across all AEO dimensions. This usually takes 30–60 seconds.
-        </p>
-        <p style={{ color: '#9ca3af', fontSize: '0.875rem', marginTop: '1rem' }}>
-          This page will show your results automatically once the audit completes.
-        </p>
-      </div>
+        <meta httpEquiv="refresh" content="3" />
+        <AuditProgress domain={domain} auditId={auditId} />
       </>
     );
   }
