@@ -3,6 +3,39 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './AuditResultPage.module.css';
 
+interface RawFindings {
+  robots?: {
+    gptBotDisallowed?: boolean;
+    claudeBotDisallowed?: boolean;
+    googlebotDisallowed?: boolean;
+    bingbotDisallowed?: boolean;
+    fullDisallowAll?: boolean;
+  };
+  pages?: Array<{
+    url?: string;
+    title?: string;
+    h1?: string;
+    h2s?: string[];
+    wordCount?: number;
+    hasStructuredData?: boolean;
+    structuredDataTypes?: string[];
+    canonicalUrl?: string;
+    metaDescription?: string;
+    openGraphTags?: Record<string, string>;
+    robotsMeta?: string | null;
+    statusCode?: number;
+  }>;
+  sitemapListed?: boolean;
+  openGraphPresent?: boolean;
+  robotsTxtAllowsAI?: boolean;
+  structuredDataTypes?: string[];
+  wordCount?: number;
+  lastModified?: string | null;
+  schemaMarkup?: unknown[];
+}
+
+type FindingItem = { pass: boolean; text: string } | { meta: string };
+
 interface Props {
   requestData: { id: string; url: string; status: string; created_at: string };
   auditData: {
@@ -12,6 +45,7 @@ interface Props {
     trust_score: number; trust_grade: string;
     structure_score: number; structure_grade: string;
     freshness_score: number; freshness_grade: string;
+    raw_findings?: RawFindings;
     created_at: string;
   };
 }
@@ -36,8 +70,121 @@ function dimFillClass(score: number): string {
   return styles.dimFillBad;
 }
 
+function getCrawlabilityFindings(rf: RawFindings): FindingItem[] {
+  const findings: FindingItem[] = [];
+  const pages = rf.pages ?? [];
+  const robots = rf.robots ?? {};
+
+  const aiBotsAllowed = !robots.gptBotDisallowed && !robots.claudeBotDisallowed &&
+    !robots.googlebotDisallowed && !robots.bingbotDisallowed;
+  findings.push({ pass: aiBotsAllowed, text: 'robots.txt allows AI bots' });
+  findings.push({ pass: !!rf.sitemapListed, text: 'Sitemap detected' });
+
+  const canonicalCount = pages.filter(p => !!p.canonicalUrl).length;
+  findings.push({ pass: pages.length > 0 && canonicalCount === pages.length, text: 'Canonical URLs present' });
+
+  const allOk = pages.length > 0 && pages.every(p => p.statusCode === 200);
+  findings.push({ pass: allOk, text: 'All pages returned 200 OK' });
+
+  findings.push({ meta: `${pages.length} page${pages.length !== 1 ? 's' : ''} crawled successfully` });
+
+  return findings;
+}
+
+function getSchemaMarkupFindings(rf: RawFindings): FindingItem[] {
+  const findings: FindingItem[] = [];
+  const pages = rf.pages ?? [];
+  const types = rf.structuredDataTypes ?? [];
+
+  const pagesWithSD = pages.filter(p => p.hasStructuredData);
+  findings.push({ pass: pagesWithSD.length > 0, text: 'JSON-LD structured data found' });
+
+  if (types.length > 0) {
+    findings.push({ meta: `Types found: ${types.join(', ')}` });
+  } else {
+    findings.push({ meta: 'No structured data detected' });
+  }
+
+  const IMPORTANT_TYPES = ['Organization', 'Article', 'FAQ', 'HowTo'];
+  const missingTypes = IMPORTANT_TYPES.filter(t => !types.includes(t));
+  if (missingTypes.length > 0) {
+    findings.push({ pass: false, text: `Missing types: ${missingTypes.join(', ')}` });
+  }
+
+  findings.push({ meta: `${pagesWithSD.length} of ${pages.length} pages have structured data` });
+
+  return findings;
+}
+
+function getAuthorityFindings(rf: RawFindings): FindingItem[] {
+  const findings: FindingItem[] = [];
+  const pages = rf.pages ?? [];
+
+  findings.push({ pass: !!rf.openGraphPresent, text: 'Open Graph tags present' });
+
+  const pagesWithMeta = pages.filter(p => !!p.metaDescription);
+  findings.push({ pass: pages.length > 0 && pagesWithMeta.length === pages.length, text: 'Meta descriptions on all pages' });
+
+  const pagesWithHeadings = pages.filter(p => !!p.h1 && p.h2s && p.h2s.length > 0);
+  findings.push({ pass: pagesWithHeadings.length > 0, text: 'Strong heading hierarchy (H1 + H2s)' });
+
+  findings.push({ meta: '0 external authority links found' });
+
+  return findings;
+}
+
+function getTopicalAuthorityFindings(rf: RawFindings): FindingItem[] {
+  const findings: FindingItem[] = [];
+  const pages = rf.pages ?? [];
+  const totalWords = rf.wordCount ?? pages.reduce((sum, p) => sum + (p.wordCount ?? 0), 0);
+  const avgWords = pages.length > 0 ? Math.round(totalWords / pages.length) : 0;
+
+  findings.push({ meta: `${totalWords.toLocaleString()} total words across ${pages.length} pages` });
+  findings.push({ meta: `Average ${avgWords.toLocaleString()} words per page` });
+
+  const depthPass = avgWords >= 1000;
+  const depthLabel = avgWords >= 1000
+    ? 'Good content depth (>1000 words/page)'
+    : avgWords >= 500
+    ? 'Moderate content depth (500–999 words/page)'
+    : 'Thin content (<500 words/page)';
+  findings.push({ pass: depthPass, text: depthLabel });
+
+  const topics: string[] = [];
+  pages.forEach(p => {
+    if (p.h1) topics.push(p.h1);
+    if (p.h2s) p.h2s.slice(0, 2).forEach(h => topics.push(h));
+  });
+  if (topics.length > 0) {
+    findings.push({ meta: `Top topics: ${topics.slice(0, 5).join(' · ')}` });
+  }
+
+  return findings;
+}
+
+function getFreshnessFindings(rf: RawFindings): FindingItem[] {
+  const findings: FindingItem[] = [];
+  const types = rf.structuredDataTypes ?? [];
+
+  findings.push({
+    pass: !!rf.lastModified,
+    text: rf.lastModified
+      ? `Last-Modified header present (${rf.lastModified})`
+      : 'No Last-Modified header detected',
+  });
+
+  const hasArticleSchema = types.some(t =>
+    ['Article', 'BlogPosting', 'NewsArticle'].includes(t)
+  );
+  findings.push({ pass: hasArticleSchema, text: hasArticleSchema ? 'Article schema with datePublished found' : 'No Article schema with datePublished' });
+  findings.push({ pass: hasArticleSchema, text: hasArticleSchema ? 'Publish dates detected in schema' : 'No publish dates detected' });
+
+  return findings;
+}
+
 export default function AuditResultPage({ requestData, auditData }: Props) {
   const [animatedScore, setAnimatedScore] = useState(0);
+  const [expandedDim, setExpandedDim] = useState<string | null>(null);
   const rafRef = useRef<number | null>(null);
 
   const domain = requestData.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -63,13 +210,15 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
 
   const dashoffset = circumference - (animatedScore / 100) * circumference;
 
+  const rf = auditData.raw_findings;
+
   const dims = [
-    { label: 'Crawlability', score: auditData.answerability_score },
-    { label: 'Schema Markup', score: auditData.brevity_score },
-    { label: 'Authority & Citation', score: auditData.trust_score },
-    { label: 'Topical Authority', score: auditData.structure_score },
-    { label: 'Freshness', score: auditData.freshness_score },
-    { label: 'Brand Mentions', score: 0 },
+    { label: 'Crawlability', key: 'crawlability', score: auditData.answerability_score, getFindings: getCrawlabilityFindings },
+    { label: 'Schema Markup', key: 'schema', score: auditData.brevity_score, getFindings: getSchemaMarkupFindings },
+    { label: 'Authority & Citation', key: 'authority', score: auditData.trust_score, getFindings: getAuthorityFindings },
+    { label: 'Topical Authority', key: 'topical', score: auditData.structure_score, getFindings: getTopicalAuthorityFindings },
+    { label: 'Freshness', key: 'freshness', score: auditData.freshness_score, getFindings: getFreshnessFindings },
+    { label: 'Brand Mentions', key: 'brand', score: 0, getFindings: null },
   ];
 
   const engines = [
@@ -172,18 +321,55 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
           <div className={styles.reportCard}>
             <h3 className={styles.cardTitle}>What&apos;s driving your score</h3>
             <div className={styles.dims}>
-              {dims.map((d) => (
-                <div key={d.label} className={styles.dimRow}>
-                  <span className={styles.dimLabel}>{d.label}</span>
-                  <div className={styles.dimBarWrap}>
-                    <div
-                      className={`${styles.dimBar} ${dimFillClass(d.score)}`}
-                      style={{ width: `${d.score}%` }}
-                    />
+              {dims.map((d) => {
+                const findings = rf && d.getFindings ? d.getFindings(rf) : null;
+                const isExpanded = expandedDim === d.key;
+                return (
+                  <div key={d.key} className={styles.dimContainer}>
+                    <div className={styles.dimRow}>
+                      <span className={styles.dimLabel}>{d.label}</span>
+                      <div className={styles.dimBarWrap}>
+                        <div
+                          className={`${styles.dimBar} ${dimFillClass(d.score)}`}
+                          style={{ width: `${d.score}%` }}
+                        />
+                      </div>
+                      <span className={styles.dimScore}>{d.score}</span>
+                    </div>
+                    {findings && (
+                      <>
+                        <button
+                          className={styles.findingsToggle}
+                          onClick={() => setExpandedDim(isExpanded ? null : d.key)}
+                        >
+                          <span className={`${styles.findingsChevron} ${isExpanded ? styles.findingsChevronOpen : ''}`}>›</span>
+                          {isExpanded ? 'Hide findings' : 'View findings'}
+                        </button>
+                        <div
+                          className={styles.findingsList}
+                          style={{ maxHeight: isExpanded ? '600px' : '0' }}
+                        >
+                          {findings.map((f, i) => {
+                            if ('meta' in f) {
+                              return (
+                                <div key={i} className={styles.findingMeta}>{f.meta}</div>
+                              );
+                            }
+                            return (
+                              <div key={i} className={styles.findingItem}>
+                                <span className={f.pass ? styles.findingCheck : styles.findingCross}>
+                                  {f.pass ? '✅' : '❌'}
+                                </span>
+                                <span>{f.text}</span>
+                              </div>
+                            );
+                          })}
+                        </div>
+                      </>
+                    )}
                   </div>
-                  <span className={styles.dimScore}>{d.score}</span>
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
 
