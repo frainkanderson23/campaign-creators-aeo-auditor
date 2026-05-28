@@ -13,25 +13,25 @@
   --color-text:             #111827;
   --color-text-secondary:   #6B7280;
   --color-text-muted:       #9CA3AF;
-  --color-border:           #E5EBF5;
+  --color-border:           #E5E7EB;
 
   /* Grade tokens — data-viz ONLY, never in UI */
   --grade-a: #16A34A;
   --grade-b: #65A30D;
-  --grade-c: #D97706;
+  --grade-c: #CA8A04;
   --grade-d: #EA580C;
   --grade-f: #DC2626;
 
   /* Typography */
-  --font-display: 'Plus Jakarta Sans', system-ui, sans-serif;
-  --font-body:    'Outfit', system-ui, sans-serif;
+  --font-display: 'DM Sans', sans-serif;
+  --font-body:    'Inter', sans-serif;
   --font-mono:    'JetBrains Mono', ui-monospace, monospace;
 
   /* Border radii */
   --radius-sm:   4px;
-  --radius-md:   6px;
-  --radius-lg:   10px;
-  --radius-xl:   14px;
+  --radius-md:   8px;
+  --radius-lg:   12px;
+  --radius-xl:   16px;
   --radius-full: 9999px;
 
   /* Shadows */
