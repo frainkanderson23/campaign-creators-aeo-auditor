@@ -234,6 +234,11 @@
   gap: 14px;
 }
 
+.dimContainer {
+  display: flex;
+  flex-direction: column;
+}
+
 .dimRow {
   display: grid;
   grid-template-columns: 200px 1fr 60px;
@@ -278,6 +283,71 @@
   color: #374151;
   text-align: right;
   font-variant-numeric: tabular-nums;
+}
+
+/* ─── Expandable Findings ───────────────────────────────── */
+.findingsToggle {
+  display: flex;
+  align-items: center;
+  gap: 5px;
+  margin-top: 6px;
+  padding: 0;
+  background: none;
+  border: none;
+  font-size: 13px;
+  color: #6B7280;
+  cursor: pointer;
+  font-family: inherit;
+  padding-left: 2px;
+}
+
+.findingsToggle:hover {
+  color: #374151;
+}
+
+.findingsChevron {
+  display: inline-block;
+  font-size: 15px;
+  line-height: 1;
+  transform: rotate(90deg);
+  transition: transform 0.2s ease;
+}
+
+.findingsChevronOpen {
+  transform: rotate(270deg);
+}
+
+.findingsList {
+  overflow: hidden;
+  transition: max-height 0.3s ease;
+  padding-left: 2px;
+}
+
+.findingItem {
+  display: flex;
+  align-items: flex-start;
+  gap: 8px;
+  font-size: 13px;
+  color: #374151;
+  padding: 6px 0;
+  line-height: 1.45;
+}
+
+.findingCheck {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.findingCross {
+  flex-shrink: 0;
+  font-size: 13px;
+}
+
+.findingMeta {
+  font-size: 12px;
+  color: #9CA3AF;
+  padding: 4px 0 4px 22px;
+  line-height: 1.45;
 }
 
 /* ─── Engines ───────────────────────────────────────────── */
