@@ -2,10 +2,29 @@
   border: 1px solid var(--color-border);
   background-color: var(--color-accent);
   border-radius: var(--radius-lg);
-  padding: 1.75rem 1.5rem;
+  padding: var(--space-card);
   display: flex;
   flex-direction: column;
   gap: 1.25rem;
+}
+
+@media (min-width: 768px) {
+  .card {
+    flex-direction: row;
+    align-items: center;
+    padding: 1.75rem 1.5rem;
+    gap: 1.5rem;
+  }
+
+  .text {
+    flex: 0 0 60%;
+    max-width: 60%;
+  }
+
+  .ctaLink {
+    flex: 0 0 40%;
+    align-self: center !important;
+  }
 }
 
 .text {

@@ -3,7 +3,7 @@
   border: 1px solid var(--color-border);
   background-color: var(--color-background);
   border-radius: var(--radius-lg);
-  padding: 1.5rem;
+  padding: var(--space-card);
   overflow: hidden;
   transition: box-shadow var(--transition-base);
 }

@@ -240,7 +240,7 @@ function ResultsView({
     : CHECK_ORDER.slice(0, 2);
 
   return (
-    <main className="flex-1 px-6 py-16">
+    <main className="flex-1 px-6 py-12 md:py-20">
       <div className="mx-auto max-w-3xl space-y-12">
         <header className="space-y-2 text-center">
           <p className="text-sm uppercase tracking-widest text-[#64748B]">
@@ -251,8 +251,8 @@ function ResultsView({
           </h1>
         </header>
 
-        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-8 sm:p-10">
-          <div className="flex flex-col sm:flex-row items-center gap-8">
+        <section className="rounded-2xl border border-[#E2E8F0] bg-white p-4 md:p-6">
+          <div className="flex flex-col md:flex-row items-center gap-8">
             <ScoreGauge score={overall} grade={grade} />
             <div className="flex-1 text-center sm:text-left">
               <p className="text-sm uppercase tracking-widest text-[#64748B]">
@@ -274,7 +274,7 @@ function ResultsView({
             Category breakdown
           </h2>
 
-          <div className="grid sm:grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {CHECK_ORDER.map((id) => (
               <CategorySummaryCard
                 key={id}
@@ -299,7 +299,7 @@ function ResultsView({
         )}
 
         {emailUnlocked && (
-          <section className="rounded-2xl border border-[#0F172A] bg-[#0F172A] p-8 sm:p-10 text-center text-white">
+          <section className="rounded-2xl border border-[#0F172A] bg-[#0F172A] p-4 md:p-6 text-center text-white">
             <h2 className="text-2xl font-semibold">
               Ready to fix your AEO score?
             </h2>
@@ -311,7 +311,7 @@ function ResultsView({
               href="https://www.campaigncreators.com/contact"
               target="_blank"
               rel="noopener noreferrer"
-              className="mt-6 inline-block rounded-lg px-6 py-3 text-base font-medium transition"
+              className="mt-6 inline-block rounded-lg px-6 py-3 text-base font-medium transition-colors duration-200 hover:bg-[#1D4ED8]"
               style={{ backgroundColor: '#2563EB' }}
             >
               Book a free AEO consultation with Campaign Creators
@@ -387,7 +387,7 @@ function CategorySummaryCard({
 }) {
   const color = GRADE_COLORS[check.grade];
   return (
-    <div className="rounded-xl border border-[#E2E8F0] bg-white p-5">
+    <div className="rounded-xl border border-[#E2E8F0] bg-white p-4 md:p-6">
       <div className="flex items-center justify-between">
         <p className="text-sm font-medium text-[#475569]">{label}</p>
         <span
@@ -411,7 +411,7 @@ function CategoryDetail({ check }: { check: CheckResult }) {
   const recommendations = check.recommendations.slice(0, 3);
 
   return (
-    <article className="rounded-2xl border border-[#E2E8F0] bg-white p-6 sm:p-8">
+    <article className="rounded-2xl border border-[#E2E8F0] bg-white p-4 md:p-6">
       <header className="flex items-center justify-between gap-4">
         <h3 className="text-xl font-semibold text-[#0F172A]">{check.label}</h3>
         <div className="flex items-center gap-3">
@@ -500,7 +500,7 @@ function EmailGate({
   }
 
   return (
-    <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white p-8 sm:p-10 text-center">
+    <section className="rounded-2xl border border-dashed border-[#CBD5E1] bg-white p-4 md:p-6 text-center">
       <h2 className="text-xl font-semibold text-[#0F172A]">
         Unlock the full report
       </h2>
@@ -511,7 +511,7 @@ function EmailGate({
       </p>
       <form
         onSubmit={onSubmit}
-        className="mt-6 flex flex-col sm:flex-row gap-3 max-w-md mx-auto"
+        className="mt-6 flex flex-col sm:flex-row gap-3 max-w-[600px] mx-auto w-full"
       >
         <input
           type="email"
@@ -519,11 +519,11 @@ function EmailGate({
           value={email}
           onChange={(e) => setEmail(e.target.value)}
           placeholder="you@company.com"
-          className="flex-1 rounded-lg border border-[#E2E8F0] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#94A3B8] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20"
+          className="flex-1 rounded-lg border border-[#E2E8F0] bg-white px-4 py-3 text-base text-[#0F172A] placeholder:text-[#94A3B8] outline-none focus:border-[#2563EB] focus:ring-2 focus:ring-[#2563EB]/20 transition-colors duration-200"
         />
         <button
           type="submit"
-          className="rounded-lg px-5 py-3 text-base font-medium text-white"
+          className="rounded-lg px-5 py-3 text-base font-medium text-white transition-colors duration-200 hover:bg-[#1D4ED8]"
           style={{ backgroundColor: '#2563EB' }}
         >
           Unlock report

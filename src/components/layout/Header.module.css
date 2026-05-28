@@ -11,10 +11,17 @@
   display: flex;
   align-items: center;
   justify-content: space-between;
+  gap: 0.75rem;
   height: 100%;
   max-width: 1120px;
   margin: 0 auto;
-  padding: 0 1.5rem;
+  padding: 0 1rem;
+}
+
+@media (min-width: 768px) {
+  .inner {
+    padding: 0 1.5rem;
+  }
 }
 
 .brand {
@@ -63,15 +70,23 @@
   border-radius: var(--radius-md);
   font-family: var(--font-body);
   font-weight: 600;
-  font-size: 0.875rem;
+  font-size: 0.8125rem;
   line-height: 1.25rem;
-  padding: 0.5rem 1rem;
+  padding: 0.5rem 0.875rem;
   background-color: transparent;
   color: var(--color-secondary);
   text-decoration: none;
   cursor: pointer;
   outline: none;
-  transition: all var(--transition-base);
+  white-space: nowrap;
+  transition: background-color var(--transition-base), color var(--transition-base), border-color var(--transition-base), box-shadow var(--transition-base);
+}
+
+@media (min-width: 768px) {
+  .cta {
+    font-size: 0.875rem;
+    padding: 0.5rem 1rem;
+  }
 }
 
 .cta:hover {
