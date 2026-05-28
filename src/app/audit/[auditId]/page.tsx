@@ -1,6 +1,6 @@
 import type { Metadata } from 'next';
 import { createClient } from '@supabase/supabase-js';
-import { AuditResultPage, type AuditRequestRow, type AuditResultRow } from '@/components/aeo/AuditResultPage';
+import AuditResultPage from '@/components/aeo/AuditResultPage';
 
 export const dynamic = 'force-dynamic';
 export const runtime = 'nodejs';
@@ -53,7 +53,7 @@ export default async function AuditResultRoute({ params }: PageProps) {
     );
   }
 
-  const requestData = requestRaw as AuditRequestRow;
+  const requestData = requestRaw as any;
 
   if (requestData.status === 'pending' || requestData.status === 'processing') {
     return (
@@ -122,7 +122,7 @@ export default async function AuditResultRoute({ params }: PageProps) {
   return (
     <AuditResultPage
       requestData={requestData}
-      auditData={resultRaw as AuditResultRow}
+      auditData={resultRaw as any}
     />
   );
 }

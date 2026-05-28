@@ -12,4 +12,4 @@ export type { ConsultationCTAProps } from './ConsultationCTA';
 
 export { AuditForm } from './AuditForm';
 
-export { AuditResultPage } from './AuditResultPage';
+export { default as AuditResultPage } from './AuditResultPage';
