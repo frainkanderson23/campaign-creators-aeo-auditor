@@ -1,343 +1,255 @@
 'use client';
 
-import { useEffect, useRef } from 'react';
+import { useEffect, useRef, useState } from 'react';
 import styles from './AuditResultPage.module.css';
 
-// ──────────────────────────────────────────────────────────────
-// Types
-// ──────────────────────────────────────────────────────────────
-export interface AuditRequestRow {
-  id: string;
-  url: string;
-  status: 'pending' | 'processing' | 'complete' | 'failed';
-  email?: string | null;
-  created_at?: string | null;
-}
-
-export interface AuditResultRow {
-  id: string;
-  audit_request_id: string;
-  overall_score: number | null;
-  overall_grade: string | null;
-  answerability_score: number | null;
-  answerability_grade: string | null;
-  brevity_score: number | null;
-  brevity_grade: string | null;
-  trust_score: number | null;
-  trust_grade: string | null;
-  structure_score: number | null;
-  structure_grade: string | null;
-  freshness_score: number | null;
-  freshness_grade: string | null;
-  created_at?: string | null;
-}
-
 interface Props {
-  requestData: AuditRequestRow;
-  auditData: AuditResultRow;
-}
-
-// ──────────────────────────────────────────────────────────────
-// Constants
-// ──────────────────────────────────────────────────────────────
-const RING_RADIUS = 110;
-const RING_CIRCUMFERENCE = 2 * Math.PI * RING_RADIUS;
-
-const DIMENSIONS = [
-  { key: 'answerability', label: 'Crawlability' },
-  { key: 'brevity',       label: 'Schema Markup' },
-  { key: 'trust',         label: 'Authority & Citation' },
-  { key: 'structure',     label: 'Topical Authority' },
-  { key: 'freshness',     label: 'Freshness Signals' },
-  { key: 'brand',         label: 'Brand Mentions' },
-] as const;
-
-const ENGINES = [
-  { name: 'ChatGPT (GPT-4o)',  status: 'partial'  as const },
-  { name: 'Perplexity AI',     status: 'missing'  as const },
-  { name: 'Google AI Overview',status: 'partial'  as const },
-  { name: 'Claude AI',         status: 'missing'  as const },
-];
-
-const SAMPLE_PROMPTS = [
-  'Best marketing agencies for SaaS companies',
-  'How to improve conversion rates for B2B software',
-  'Top content marketing strategies for tech startups',
-];
-
-function clamp(v: number | null | undefined): number {
-  if (typeof v !== 'number' || !Number.isFinite(v)) return 0;
-  return Math.max(0, Math.min(100, v));
-}
-
-function domainFromUrl(url: string): string {
-  try { return new URL(url).hostname; } catch { return url; }
-}
-
-function gradeStyle(grade: string | null): string {
-  switch ((grade ?? 'F').toUpperCase()) {
-    case 'A+': return styles.gradeAPlus;
-    case 'A':  return styles.gradeA;
-    case 'B':  return styles.gradeB;
-    case 'C':  return styles.gradeC;
-    case 'D':  return styles.gradeD;
-    default:   return styles.gradeF;
-  }
-}
-
-function barFillStyle(score: number): string {
-  if (score >= 70) return styles.dimFillHigh;
-  if (score >= 45) return styles.dimFillMid;
-  return styles.dimFillLow;
-}
-
-function deriveRecommendations(data: AuditResultRow) {
-  const dims = [
-    { label: 'Crawlability',         score: clamp(data.answerability_score), key: 'crawl' },
-    { label: 'Schema Markup',        score: clamp(data.brevity_score),        key: 'schema' },
-    { label: 'Authority & Citation', score: clamp(data.trust_score),          key: 'authority' },
-    { label: 'Topical Authority',    score: clamp(data.structure_score),       key: 'structure' },
-    { label: 'Freshness Signals',    score: clamp(data.freshness_score),       key: 'freshness' },
-  ];
-
-  const ALL_RECS: Record<string, { title: string; desc: string; priority: 'high' | 'medium' | 'low' }> = {
-    crawl:     { title: 'Allow AI crawlers in robots.txt', desc: 'Add GPTBot, ClaudeBot, and PerplexityBot to your robots.txt allow list and submit your sitemap to major AI index endpoints.', priority: 'high' },
-    schema:    { title: 'Implement structured data markup', desc: 'Add JSON-LD schema markup (Organization, FAQ, Article, BreadcrumbList) to your key pages so AI models can parse entity relationships.', priority: 'high' },
-    authority: { title: 'Build citation-worthy content', desc: 'Publish original research, data studies, or expert interviews that AI training corpora can cite. Earn backlinks from authoritative domains.', priority: 'medium' },
-    structure: { title: 'Deepen topical coverage', desc: 'Create a pillar-and-cluster content architecture. Cover sub-topics exhaustively so AI models recognize your site as a topical authority.', priority: 'medium' },
-    freshness: { title: 'Update content regularly', desc: 'Add a "Last updated" timestamp to key pages, publish monthly insight posts, and refresh statistics. AI models weigh recency when generating answers.', priority: 'low' },
+  requestData: { id: string; url: string; status: string; created_at: string };
+  auditData: {
+    id: string; overall_score: number; overall_grade: string;
+    answerability_score: number; answerability_grade: string;
+    brevity_score: number; brevity_grade: string;
+    trust_score: number; trust_grade: string;
+    structure_score: number; structure_grade: string;
+    freshness_score: number; freshness_grade: string;
+    created_at: string;
   };
-
-  const BRAND_REC = { key: 'brand', title: 'Establish brand mention strategy', desc: 'Build brand mentions in press, directories, and community forums. Direct brand search signals and co-citations help AI models recognize your entity. (Phase 2 analysis)', priority: 'low' as const };
-
-  const sorted = [...dims].sort((a, b) => a.score - b.score);
-  const recs = sorted.map(d => ({ ...ALL_RECS[d.key], key: d.key }));
-  recs.push(BRAND_REC);
-
-  return recs.slice(0, 5);
 }
 
-function priorityStyle(p: 'high' | 'medium' | 'low'): string {
-  return p === 'high' ? styles.recHigh : p === 'medium' ? styles.recMedium : styles.recLow;
+function resolveGradeClass(grade: string): string {
+  const g = grade?.toLowerCase();
+  if (g === 'strong' || g === 'good') return styles.scoreGradeGood;
+  if (g === 'needs work' || g === 'warning') return styles.scoreGradeWarn;
+  return styles.scoreGradeBad;
 }
 
-// ──────────────────────────────────────────────────────────────
-// Component
-// ──────────────────────────────────────────────────────────────
-export function AuditResultPage({ requestData, auditData }: Props) {
-  const fillRef = useRef<SVGCircleElement>(null);
-  const overallScore = clamp(auditData.overall_score);
-  const domain = domainFromUrl(requestData.url);
-  const auditDate = requestData.created_at
-    ? new Date(requestData.created_at).toLocaleDateString('en-US', { year: 'numeric', month: 'long', day: 'numeric' })
-    : 'Today';
-  const recommendations = deriveRecommendations(auditData);
+function resolveGradeLabel(grade: string): string {
+  const g = grade?.toLowerCase();
+  if (g === 'strong' || g === 'good') return 'Strong';
+  if (g === 'needs work' || g === 'warning') return 'Needs work';
+  return 'Critical';
+}
+
+function dimFillClass(score: number): string {
+  if (score >= 70) return styles.dimFillGood;
+  if (score >= 40) return styles.dimFillWarn;
+  return styles.dimFillBad;
+}
+
+export default function AuditResultPage({ requestData, auditData }: Props) {
+  const [animatedScore, setAnimatedScore] = useState(0);
+  const rafRef = useRef<number | null>(null);
+
+  const domain = requestData.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
+  const auditDate = new Date(auditData.created_at).toLocaleDateString('en-US', {
+    month: 'long', day: 'numeric', year: 'numeric',
+  });
+
+  const circumference = 2 * Math.PI * 110;
+  const target = auditData.overall_score;
 
   useEffect(() => {
-    if (!fillRef.current) return;
-    const offset = RING_CIRCUMFERENCE - (overallScore / 100) * RING_CIRCUMFERENCE;
-    fillRef.current.style.strokeDasharray = String(RING_CIRCUMFERENCE);
-    fillRef.current.style.strokeDashoffset = String(RING_CIRCUMFERENCE);
-    requestAnimationFrame(() => {
-      requestAnimationFrame(() => {
-        if (fillRef.current) fillRef.current.style.strokeDashoffset = String(offset);
-      });
-    });
-  }, [overallScore]);
+    const duration = 1400;
+    const start = performance.now();
+    function animate(now: number) {
+      const t = Math.min((now - start) / duration, 1);
+      const eased = 1 - Math.pow(1 - t, 3);
+      setAnimatedScore(Math.round(eased * target));
+      if (t < 1) rafRef.current = requestAnimationFrame(animate);
+    }
+    rafRef.current = requestAnimationFrame(animate);
+    return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
+  }, [target]);
 
-  const overallGrade = auditData.overall_grade ?? 'F';
+  const dashoffset = circumference - (animatedScore / 100) * circumference;
+
+  const dims = [
+    { label: 'Crawlability', score: auditData.answerability_score },
+    { label: 'Schema Markup', score: auditData.brevity_score },
+    { label: 'Authority & Citation', score: auditData.trust_score },
+    { label: 'Topical Authority', score: auditData.structure_score },
+    { label: 'Freshness', score: auditData.freshness_score },
+    { label: 'Brand Mentions', score: 0 },
+  ];
+
+  const engines = [
+    { name: 'ChatGPT', bg: '#10A37F', icon: '✦', status: 'PARTIAL' },
+    { name: 'Perplexity', bg: '#20808D', icon: '◎', status: 'MISSING' },
+    { name: 'Google AI', bg: 'linear-gradient(135deg,#4285F4,#34A853)', icon: '◈', status: 'PARTIAL' },
+    { name: 'Claude', bg: '#D97757', icon: '◆', status: 'MISSING' },
+  ];
+
+  const samplePrompts = [
+    `Best tools for ${domain.split('.')[0]} businesses`,
+    `How does ${domain} compare to alternatives?`,
+    `What do customers say about ${domain.split('.')[0]}?`,
+  ];
+
+  const recs = [
+    { priority: 'high', title: 'Add structured data markup', desc: 'Implement JSON-LD schema for your key pages to improve AI engine crawlability and entity recognition.' },
+    { priority: 'high', title: 'Build authoritative citations', desc: 'Get mentioned in industry publications and directories that AI engines use as trusted sources.' },
+    { priority: 'medium', title: 'Optimize for conversational queries', desc: 'Rewrite key pages to answer questions directly in the first 50 words.' },
+    { priority: 'medium', title: 'Increase content freshness', desc: 'Publish or update content weekly to signal active expertise to AI engines.' },
+    { priority: 'low', title: 'Establish brand entity', desc: 'Create a Wikipedia-style entity page and ensure NAP consistency across the web.' },
+  ];
+
+  const badgeClass = (status: string) =>
+    status === 'PARTIAL' ? styles.erBadgePartial : styles.erBadgeMissing;
 
   return (
     <div className={styles.auditPage}>
-      {/* Header */}
-      <header className={styles.auditHeader}>
-        <div className={styles.auditHeaderMeta}>
-          <h1 className={styles.auditDomain}>{domain}</h1>
-          <p className={styles.auditDate}>AEO Audit Report · {auditDate}</p>
-        </div>
-        <div className={styles.auditActions}>
-          <a href="#action-plan" className={`${styles.auditBtn} ${styles.auditBtnPrimary}`}>
-            View Action Plan
-          </a>
-          <a href="#" className={`${styles.auditBtn} ${styles.auditBtnOutline}`} onClick={e => e.preventDefault()}>
-            Download PDF
-          </a>
-        </div>
-      </header>
+      <div className={styles.container}>
 
-      {/* Score Hero */}
-      <section className={styles.scoreHero}>
-        <div className={styles.scoreRing}>
-          <svg viewBox="0 0 260 260">
-            <defs>
-              <linearGradient id="scoreGradient" x1="0%" y1="0%" x2="100%" y2="0%">
-                <stop offset="0%"   stopColor="#F59E0B" />
-                <stop offset="100%" stopColor="#EF4444" />
-              </linearGradient>
-            </defs>
-            <circle
-              className={styles.scoreRingTrack}
-              cx="130" cy="130" r={RING_RADIUS}
-            />
-            <circle
-              ref={fillRef}
-              className={styles.scoreRingFill}
-              cx="130" cy="130" r={RING_RADIUS}
-              strokeDasharray={RING_CIRCUMFERENCE}
-              strokeDashoffset={RING_CIRCUMFERENCE}
-            />
-          </svg>
-          <div className={styles.scoreRingInner}>
-            <span className={styles.scoreNum}>{overallScore}</span>
-            <span className={styles.scoreNumSub}>/100</span>
-            <span className={`${styles.scoreGrade} ${gradeStyle(overallGrade)}`}>
-              Grade {overallGrade}
-            </span>
+        {/* Header */}
+        <div className={styles.auditHeader}>
+          <div>
+            <div className={styles.auditStatus}>
+              <span className={styles.greenDot} />
+              AUDIT COMPLETE · {auditDate}
+            </div>
+            <h1>{domain}</h1>
+            <div className={styles.aMeta}>
+              <span>AEO Score Report</span>
+              <span>·</span>
+              <span>{auditDate}</span>
+              <span>·</span>
+              <span>ID: {auditData.id.slice(0, 8)}</span>
+            </div>
+          </div>
+          <div className={styles.auditActions}>
+            <button className={styles.btnSecondary}>Share</button>
+            <button className={styles.btnSecondary}>Download PDF</button>
+            <button className={styles.btnPrimary}>New audit</button>
           </div>
         </div>
 
-        <div className={styles.scoreSummary}>
-          <h2>Your AEO Score: {overallScore}/100</h2>
-          <p>
-            {domain} {overallScore >= 70
-              ? 'is performing well in AI search, but there are key areas to improve to maximize citation frequency.'
-              : overallScore >= 45
-              ? 'has moderate AI search visibility. Significant improvements are available across multiple dimensions.'
-              : 'has low AI search visibility. Your content is rarely surfaced in AI-generated answers — this is an opportunity.'}
-          </p>
-          <div className={styles.scoreCallout}>
-            <strong>What this means for you:</strong>
-            {overallScore >= 70
-              ? 'You appear in roughly 30–50% of relevant AI responses. Strategic improvements could push you into the top tier.'
-              : overallScore >= 45
-              ? 'You appear in roughly 10–30% of relevant AI responses. Following the action plan below could double that within 90 days.'
-              : 'You are missing from most AI-generated answers in your niche. The good news: early movers who fix this now gain lasting competitive advantage.'}
+        {/* Score Hero */}
+        <div className={styles.scoreHero}>
+          <div className={styles.scoreRingWrap}>
+            <div className={styles.scoreRing}>
+              <svg width="260" height="260" viewBox="0 0 260 260">
+                <defs>
+                  <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
+                    <stop offset="0%" stopColor="#F59E0B" />
+                    <stop offset="100%" stopColor="#EF4444" />
+                  </linearGradient>
+                </defs>
+                <circle cx="130" cy="130" r="110" fill="none" stroke="#F3F4F6" strokeWidth="16" />
+                <circle
+                  cx="130" cy="130" r="110" fill="none"
+                  stroke="url(#scoreGrad)" strokeWidth="16" strokeLinecap="round"
+                  strokeDasharray={circumference} strokeDashoffset={dashoffset}
+                  style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
+                />
+              </svg>
+              <div className={styles.scoreRingInner}>
+                <div className={styles.scoreNum}>{animatedScore}</div>
+                <div className={styles.scoreOutOf}>/100</div>
+              </div>
+            </div>
+            <div className={`${styles.scoreGrade} ${resolveGradeClass(auditData.overall_grade)}`}>
+              {resolveGradeLabel(auditData.overall_grade)}
+            </div>
+          </div>
+
+          <div className={styles.scoreSummary}>
+            <div className={styles.scoreSubtitle}>Your AEO Visibility Score</div>
+            <h2>Your brand is being skipped by AI engines answering your customers&apos; questions</h2>
+            <p>
+              With a score of <strong>{auditData.overall_score}/100</strong>, {domain} is nearly invisible to
+              AI-powered search. When potential customers ask ChatGPT, Perplexity, or Google AI about solutions
+              in your space, your brand isn&apos;t being cited — your competitors are.
+            </p>
+            <div className={styles.scoreCallout}>
+              <strong>⚠ Estimated impact:</strong> Brands with sub-50 AEO scores lose an estimated 23–41%
+              of AI-referred traffic to competitors who have optimized for answer engine discovery.
+            </div>
           </div>
         </div>
-      </section>
 
-      {/* Report Grid */}
-      <div className={styles.reportGrid}>
-
-        {/* Dimension Scores */}
-        <div className={`${styles.reportCard} ${styles.reportCardFull}`}>
-          <h3>What's driving your score</h3>
-          <ul className={styles.dimList}>
-            {DIMENSIONS.map(({ key, label }) => {
-              const isPlaceholder = key === 'brand';
-              const score = isPlaceholder ? 0 : clamp((auditData as any as Record<string, number | null | undefined>)[`${key}_score`]);
-              const displayScore = isPlaceholder ? '—' : score;
-              return (
-                <li key={key} className={styles.dimRow}>
-                  <div className={styles.dimRowHeader}>
-                    <span className={styles.dimLabel}>
-                      {label}
-                      {isPlaceholder && (
-                        <span style={{ fontWeight: 400, color: '#9ca3af', marginLeft: '0.5rem', fontSize: '0.75rem' }}>
-                          Phase 2
-                        </span>
-                      )}
-                    </span>
-                    <span className={styles.dimScore}>
-                      {displayScore}{typeof displayScore === 'number' ? '/100' : ''}
-                    </span>
+        {/* Report Grid */}
+        <div className={styles.reportGrid}>
+          <div className={styles.reportCard}>
+            <h3 className={styles.cardTitle}>What&apos;s driving your score</h3>
+            <div className={styles.dims}>
+              {dims.map((d) => (
+                <div key={d.label} className={styles.dimRow}>
+                  <span className={styles.dimLabel}>{d.label}</span>
+                  <div className={styles.dimBarWrap}>
+                    <div
+                      className={`${styles.dimBar} ${dimFillClass(d.score)}`}
+                      style={{ width: `${d.score}%` }}
+                    />
                   </div>
-                  <div className={styles.dimBar}>
-                    {!isPlaceholder && (
-                      <div
-                        className={`${styles.dimFill} ${barFillStyle(score)}`}
-                        style={{ width: `${score}%` }}
-                      />
-                    )}
-                  </div>
-                </li>
-              );
-            })}
-          </ul>
-        </div>
+                  <span className={styles.dimScore}>{d.score}</span>
+                </div>
+              ))}
+            </div>
+          </div>
 
-        {/* Engine Results */}
-        <div className={styles.reportCard}>
-          <h3>How each AI engine sees you</h3>
-          <ul className={styles.engineList}>
-            {ENGINES.map(({ name, status }) => (
-              <li key={name} className={styles.engineResult}>
-                <span className={styles.engineName}>{name}</span>
-                <span className={`${styles.erBadge} ${
-                  (status as string) === 'cited'   ? styles.erCited :
-                  status === 'partial' ? styles.erPartial :
-                                        styles.erMissing
-                }`}>
-                  {(status as string) === 'cited' ? '✓ Cited' : status === 'partial' ? '~ Partial' : '✗ Missing'}
-                </span>
-              </li>
-            ))}
-          </ul>
-          <p className={styles.engineNote}>
-            Live engine sampling coming in Phase 2. Results above are indicative based on your score profile.
-          </p>
+          <div className={styles.reportCard}>
+            <h3 className={styles.cardTitle}>How each AI engine sees you</h3>
+            <div className={styles.engines}>
+              {engines.map((eng) => (
+                <div key={eng.name} className={styles.engineResult}>
+                  <div className={styles.erName}>
+                    <span className={styles.erIcon} style={{ background: eng.bg }}>{eng.icon}</span>
+                    <span>{eng.name}</span>
+                  </div>
+                  <span className={`${styles.erBadge} ${badgeClass(eng.status)}`}>{eng.status}</span>
+                </div>
+              ))}
+            </div>
+          </div>
         </div>
 
         {/* Sample Prompts */}
-        <div className={styles.reportCard}>
-          <h3>Sample prompts AI users ask</h3>
-          <ul className={styles.promptList}>
-            {SAMPLE_PROMPTS.map((prompt) => (
-              <li key={prompt} className={styles.promptRow}>
-                <span className={styles.promptText}>"{prompt}"</span>
-                <span className={`${styles.erBadge} ${styles.erNotCited}`}>
-                  ✗ Not Cited
-                </span>
-              </li>
+        <div className={styles.reportCard} style={{ marginTop: 24 }}>
+          <h3 className={styles.cardTitle}>Sample prompts where you&apos;re not cited</h3>
+          <div className={styles.prompts}>
+            {samplePrompts.map((q) => (
+              <div key={q} className={styles.promptRow}>
+                <span className={styles.promptQ}>&ldquo;{q}&rdquo;</span>
+                <span className={`${styles.erBadge} ${styles.erBadgeMissing}`}>NOT CITED</span>
+              </div>
             ))}
-          </ul>
-          <p className={styles.engineNote}>
-            Prompt sampling is placeholder — personalised prompts coming in Phase 2.
-          </p>
+          </div>
         </div>
 
-        {/* Action Plan */}
-        <div id="action-plan" className={`${styles.reportCard} ${styles.reportCardFull}`}>
-          <h3>90-day action plan</h3>
-          <ol className={styles.recs}>
-            {recommendations.map((rec, i) => (
-              <li key={rec.key ?? i} className={styles.rec}>
-                <span className={styles.recNum}>{i + 1}</span>
-                <div className={styles.recBody}>
-                  <p className={styles.recTitle}>
-                    {rec.title}
-                    <span className={`${styles.recPriority} ${priorityStyle(rec.priority)}`}>
-                      {rec.priority}
-                    </span>
-                  </p>
-                  <p className={styles.recDesc}>{rec.desc}</p>
+        {/* 90-day Action Plan */}
+        <div className={styles.reportCard} style={{ marginTop: 24 }}>
+          <h3 className={styles.cardTitle}>Your 90-day action plan</h3>
+          <div className={styles.recs}>
+            {recs.map((rec, i) => (
+              <div key={i} className={styles.rec}>
+                <div className={styles.recNum}>{i + 1}</div>
+                <div>
+                  <div className={styles.recTitle}>{rec.title}</div>
+                  <div className={styles.recDesc}>{rec.desc}</div>
                 </div>
-              </li>
+                <span className={`${styles.recPriority} ${
+                  rec.priority === 'high' ? styles.recPriorityHigh :
+                  rec.priority === 'medium' ? styles.recPriorityMed :
+                  styles.recPriorityLow
+                }`}>{rec.priority}</span>
+              </div>
             ))}
-          </ol>
+          </div>
         </div>
 
-      </div>
+        {/* CTA Card */}
+        <div className={styles.ctaCard}>
+          <h2>Want help executing?</h2>
+          <p>
+            Our AEO specialists will implement these recommendations and get your brand cited by AI engines
+            within 90 days.
+          </p>
+          <div className={styles.ctaActions}>
+            <button className={styles.ctaBtnPrimary}>Book a strategy call</button>
+            <button className={styles.ctaBtnSecondary}>View pricing</button>
+          </div>
+        </div>
 
-      {/* CTA Card */}
-      <div className={styles.ctaCard}>
-        <div className={styles.ctaText}>
-          <h2>Want expert help implementing this?</h2>
-          <p>Our team has helped 50+ B2B companies become the top cited source in their niche.</p>
-        </div>
-        <div className={styles.ctaButtons}>
-          <a
-            href="https://www.campaigncreators.com/contact"
-            className={styles.ctaBtnPrimary}
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Book Strategy Call
-          </a>
-          <button className={styles.ctaBtnSecondary} onClick={() => window.print()}>
-            Download PDF
-          </button>
-        </div>
       </div>
     </div>
   );
