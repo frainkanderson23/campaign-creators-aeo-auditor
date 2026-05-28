@@ -40,7 +40,7 @@ const LEARN_ITEMS = [
   { n: '01', h: 'Where do we stand right now?', p: 'A single 0–100 AEO Visibility Score, benchmarked against your industry.' },
   { n: '02', h: 'What are competitors getting cited for?', p: "See the prompts where rival brands appear — and you don't." },
   { n: '03', h: 'Why are AI engines ignoring us?', p: 'Plain explanations of the structural reasons (and the easy fixes).' },
-  { n: '04', h: 'What's the dollar cost of doing nothing?', p: 'An estimate of pipeline at risk, based on your industry and traffic.' },
+  { n: '04', h: "What's the dollar cost of doing nothing?", p: 'An estimate of pipeline at risk, based on your industry and traffic.' },
   { n: '05', h: 'What do we fix first?', p: 'A prioritized 30/60/90 day plan — High/Medium/Low effort tagged.' },
 ] as const;
 

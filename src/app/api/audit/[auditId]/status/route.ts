@@ -53,7 +53,7 @@ type Categories = Record<string, CategoryEntry>;
 
 export async function GET(
   _request: NextRequest,
-  ctx: RouteContext<'/api/audit/[auditId]/status'>,
+  ctx: { params: Promise<{ auditId: string }> },
 ): Promise<Response> {
   const { auditId } = await ctx.params;
 

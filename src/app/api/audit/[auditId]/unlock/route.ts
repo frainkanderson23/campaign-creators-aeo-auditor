@@ -62,7 +62,7 @@ function isUniqueViolation(error: unknown): boolean {
 
 export async function POST(
   request: NextRequest,
-  ctx: RouteContext<'/api/audit/[auditId]/unlock'>,
+  ctx: { params: Promise<{ auditId: string }> },
 ): Promise<Response> {
   const { auditId } = await ctx.params;
 
@@ -127,7 +127,7 @@ export async function POST(
       );
     }
 
-    void upsertContact({ email, auditRequestId: auditId }).catch(() => {});
+    void upsertContact(email).catch(() => {});
 
     const { data: resultData, error: resultsError } = await supabase
       .from('audit_results')
