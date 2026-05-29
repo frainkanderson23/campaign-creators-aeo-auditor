@@ -3,6 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import * as cheerio from 'cheerio';
 import { runScorers } from '@/lib/scoring';
+import { probeClaudeVisibility } from '@/lib/auditor/ai-probe';
 import type { CrawlPage, CrawlRobotsData } from '@/types/audit';
 
 export const maxDuration = 60;
@@ -286,6 +287,38 @@ async function crawlSinglePage(
   };
 }
 
+function extractIndustry(pages: CrawlPage[]): string {
+  for (const page of pages.slice(0, 3)) {
+    if (page.metaDescription) return page.metaDescription;
+    const ogDesc = page.openGraphTags?.['og:description'];
+    if (ogDesc) return ogDesc;
+    if (page.h1) return page.h1;
+  }
+  return '';
+}
+
+function extractTopics(pages: CrawlPage[]): string[] {
+  const topics = new Set<string>();
+  for (const page of pages.slice(0, 5)) {
+    if (page.h2s) {
+      for (const h2 of page.h2s.slice(0, 3)) topics.add(h2);
+    }
+    if (page.title) topics.add(page.title);
+  }
+  return Array.from(topics).slice(0, 6);
+}
+
+function extractCompanyName(pages: CrawlPage[]): string {
+  for (const page of pages) {
+    const siteName = page.openGraphTags?.['og:site_name'];
+    if (siteName) return siteName;
+    const ogTitle = page.openGraphTags?.['og:title'];
+    if (ogTitle) return ogTitle;
+    if (page.title) return page.title;
+  }
+  return '';
+}
+
 function readBearerToken(req: NextRequest): string | null {
   const header = req.headers.get('authorization') ?? '';
   if (!header.startsWith('Bearer ')) return null;
@@ -400,6 +433,16 @@ export async function POST(req: NextRequest): Promise<Response> {
 
     const scored = runScorers({ crawledPages, robotsData, domainUrl });
 
+    let aiProbe = null;
+    try {
+      const industry = extractIndustry(crawledPages);
+      const topics = extractTopics(crawledPages);
+      const companyName = extractCompanyName(crawledPages);
+      aiProbe = await probeClaudeVisibility(domainUrl, companyName, industry, topics);
+    } catch (err) {
+      console.error('AI probe failed:', err);
+    }
+
     // Persist into actual audit_results schema. The DB column is `raw_findings`
     // (JSONB) — we extend the standard RawFindings shape with the full crawl
     // payload so both the status route (which reads RawFindings) and the spec's
@@ -408,6 +451,7 @@ export async function POST(req: NextRequest): Promise<Response> {
       ...scored.raw_findings,
       pages: crawledPages,
       robots: robotsData,
+      aiProbe,
     };
 
     await supabase
