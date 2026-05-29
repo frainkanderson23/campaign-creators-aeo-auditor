@@ -62,6 +62,20 @@ function isMultiEngineProbe(probe: AiProbe | MultiEngineProbe): probe is MultiEn
   return 'claude' in probe;
 }
 
+function cleanMarkdown(text: string): string {
+  return text
+    .replace(/\*\*/g, '')
+    .replace(/#{1,6}\s/g, '')
+    .replace(/---/g, '')
+    .replace(/\n{2,}/g, ' ')
+    .trim();
+}
+
+function compStatus(probe: AiProbe | null): string {
+  if (!probe || probe.results.length === 0) return 'COMING SOON';
+  return probe.status.toUpperCase();
+}
+
 type FindingItem = { pass: boolean; text: string } | { meta: string };
 
 interface Props {
@@ -214,6 +228,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [expandedDim, setExpandedDim] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
+  const [activeEngine, setActiveEngine] = useState<string>('claude');
   const rafRef = useRef<number | null>(null);
 
   const domain = requestData.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -283,14 +298,20 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     { name: 'Claude', bg: '#D97757', icon: '◆', probe: claudeProbe },
   ];
 
-  const primaryProbe = claudeProbe ?? openaiProbe ?? perplexityProbe;
-  const samplePrompts = primaryProbe?.results?.length
-    ? primaryProbe.results
-    : [
-        { prompt: `Best tools for ${domain.split('.')[0]} businesses`, cited: false, snippet: null },
-        { prompt: `How does ${domain} compare to alternatives?`, cited: false, snippet: null },
-        { prompt: `What do customers say about ${domain.split('.')[0]}?`, cited: false, snippet: null },
-      ];
+  const tabEngines = [
+    { key: 'claude', name: 'Claude', color: '#D97757', probe: claudeProbe },
+    { key: 'openai', name: 'ChatGPT', color: '#10A37F', probe: openaiProbe },
+    { key: 'perplexity', name: 'Perplexity', color: '#20808D', probe: perplexityProbe },
+  ].filter((e): e is { key: string; name: string; color: string; probe: AiProbe } =>
+    e.probe !== null && e.probe.results.length > 0
+  );
+
+  const comparisonEngines = [
+    { key: 'claude', name: 'Claude', color: '#D97757', probe: claudeProbe },
+    { key: 'openai', name: 'ChatGPT', color: '#10A37F', probe: openaiProbe },
+    { key: 'perplexity', name: 'Perplexity', color: '#20808D', probe: perplexityProbe },
+    { key: 'googleai', name: 'Google AI', color: '#4285F4', probe: null as AiProbe | null },
+  ];
 
   const recs = [
     { priority: 'high', title: 'Add structured data markup', desc: 'Implement JSON-LD schema for your key pages to improve AI engine crawlability and entity recognition.' },
@@ -461,38 +482,100 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
           </div>
         </div>
 
-        {/* Sample Prompts */}
+        {/* Cross-engine AI Probe Comparison */}
         <div className={styles.reportCard} style={{ marginTop: 24 }}>
-          <h3 className={styles.cardTitle}>
-            {primaryProbe ? `${primaryProbe.engine} — sample prompts tested` : 'Sample prompts where you\'re not cited'}
-          </h3>
-          {primaryProbe && (
-            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16, marginTop: -8 }}>
-              {primaryProbe.citedCount} of {primaryProbe.totalPrompts} prompts cited your domain
+          <h3 className={styles.cardTitle}>AI Probe — Cross-Engine Comparison</h3>
+
+          {/* Comparison summary grid */}
+          <div className={styles.comparisonGrid}>
+            <div className={styles.comparisonRow}>
+              <div className={`${styles.comparisonCell} ${styles.comparisonHeaderCell}`} />
+              {comparisonEngines.map(eng => (
+                <div key={eng.key} className={`${styles.comparisonCell} ${styles.comparisonHeaderCell}`}>
+                  <div className={styles.comparisonEngine}>
+                    <span className={styles.engineDot} style={{ background: eng.color }} />
+                    {eng.name}
+                  </div>
+                </div>
+              ))}
+            </div>
+            <div className={styles.comparisonRow}>
+              <div className={`${styles.comparisonCell} ${styles.comparisonLabelCell}`}>Status</div>
+              {comparisonEngines.map(eng => (
+                <div key={eng.key} className={styles.comparisonCell}>
+                  <span className={`${styles.erBadge} ${badgeClass(compStatus(eng.probe))}`}>
+                    {compStatus(eng.probe)}
+                  </span>
+                </div>
+              ))}
+            </div>
+            <div className={styles.comparisonRow}>
+              <div className={`${styles.comparisonCell} ${styles.comparisonLabelCell}`}>Cited</div>
+              {comparisonEngines.map(eng => (
+                <div key={eng.key} className={styles.comparisonCell}>
+                  {eng.probe && eng.probe.results.length > 0
+                    ? `${eng.probe.citedCount}/${eng.probe.totalPrompts}`
+                    : '—'}
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Engine tabs */}
+          {tabEngines.length > 0 && (
+            <>
+              <div className={styles.engineTabs}>
+                {tabEngines.map(eng => (
+                  <button
+                    key={eng.key}
+                    className={`${styles.engineTab} ${activeEngine === eng.key ? styles.engineTabActive : ''}`}
+                    style={activeEngine === eng.key ? { borderBottomColor: eng.color } : undefined}
+                    onClick={() => setActiveEngine(eng.key)}
+                  >
+                    {eng.name}
+                    <span className={styles.engineTabBadge}>
+                      {eng.probe.citedCount}/{eng.probe.totalPrompts}
+                    </span>
+                  </button>
+                ))}
+              </div>
+
+              {(() => {
+                const activeTab = tabEngines.find(e => e.key === activeEngine) ?? tabEngines[0];
+                const probe = activeTab.probe;
+                return (
+                  <div>
+                    <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16, marginTop: 0 }}>
+                      {probe.citedCount} of {probe.totalPrompts} prompts cited your domain
+                    </p>
+                    <div className={styles.prompts}>
+                      {probe.results.map((item, i) => (
+                        <div key={i} className={styles.promptRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 16 }}>
+                            <span className={styles.promptQ}>&ldquo;{item.prompt}&rdquo;</span>
+                            <span className={`${styles.erBadge} ${item.cited ? styles.erBadgeCited : styles.erBadgeMissing}`}>
+                              {item.cited ? 'CITED' : 'NOT CITED'}
+                            </span>
+                          </div>
+                          {item.snippet && (
+                            <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                              {cleanMarkdown(item.snippet)}
+                            </p>
+                          )}
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                );
+              })()}
+            </>
+          )}
+
+          {tabEngines.length === 0 && (
+            <p style={{ fontSize: 14, color: 'var(--color-text-muted)', marginTop: 8 }}>
+              No AI probe results available yet.
             </p>
           )}
-          <div className={styles.prompts}>
-            {samplePrompts.map((item, i) => {
-              const prompt = typeof item === 'string' ? item : item.prompt;
-              const cited = typeof item === 'string' ? false : item.cited;
-              const snippet = typeof item === 'string' ? null : item.snippet;
-              return (
-                <div key={i} className={styles.promptRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 16 }}>
-                    <span className={styles.promptQ}>&ldquo;{prompt}&rdquo;</span>
-                    <span className={`${styles.erBadge} ${cited ? styles.erBadgeCited : styles.erBadgeMissing}`}>
-                      {cited ? 'CITED' : 'NOT CITED'}
-                    </span>
-                  </div>
-                  {snippet && (
-                    <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>
-                      {snippet}
-                    </p>
-                  )}
-                </div>
-              );
-            })}
-          </div>
         </div>
 
         {/* 90-day Action Plan */}
