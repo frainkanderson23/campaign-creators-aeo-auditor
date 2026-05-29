@@ -1,4 +1,5 @@
 import Anthropic from '@anthropic-ai/sdk';
+import OpenAI from 'openai';
 
 export interface ProbeResult {
   prompt: string;
@@ -103,6 +104,97 @@ export async function probeWithPrompts(
   const citedCount = results.filter(r => r.cited).length;
   return {
     engine: 'Claude',
+    results,
+    citedCount,
+    totalPrompts: results.length,
+    status: citedCount >= 4 ? 'cited' : citedCount >= 1 ? 'partial' : 'missing',
+  };
+}
+
+export async function probeOpenAI(
+  domain: string,
+  companyName: string,
+  prompts: string[],
+): Promise<ProbeReport> {
+  const apiKey = process.env.OPENAI_API_KEY;
+  if (!apiKey) return { engine: 'ChatGPT', results: [], citedCount: 0, totalPrompts: 0, status: 'missing' };
+
+  const client = new OpenAI({ apiKey });
+  const results: ProbeResult[] = [];
+  const variants = extractDomainVariants(domain, companyName);
+
+  for (const prompt of prompts) {
+    try {
+      const response = await client.chat.completions.create({
+        model: 'gpt-4o',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      const text = response.choices[0]?.message?.content || '';
+      const lower = text.toLowerCase();
+      const cited = variants.some(v => lower.includes(v));
+      results.push({
+        prompt,
+        response: text.substring(0, 500),
+        cited,
+        mentionedDomains: extractMentionedDomains(text),
+        snippet: cited ? findSnippet(text, variants) : null,
+      });
+    } catch {
+      results.push({ prompt, response: 'Error querying engine', cited: false, mentionedDomains: [], snippet: null });
+    }
+  }
+
+  const citedCount = results.filter(r => r.cited).length;
+  return {
+    engine: 'ChatGPT',
+    results,
+    citedCount,
+    totalPrompts: results.length,
+    status: citedCount >= 4 ? 'cited' : citedCount >= 1 ? 'partial' : 'missing',
+  };
+}
+
+export async function probePerplexity(
+  domain: string,
+  companyName: string,
+  prompts: string[],
+): Promise<ProbeReport> {
+  const apiKey = process.env.PERPLEXITY_API_KEY;
+  if (!apiKey) return { engine: 'Perplexity', results: [], citedCount: 0, totalPrompts: 0, status: 'missing' };
+
+  const client = new OpenAI({
+    apiKey,
+    baseURL: 'https://api.perplexity.ai',
+  });
+  const results: ProbeResult[] = [];
+  const variants = extractDomainVariants(domain, companyName);
+
+  for (const prompt of prompts) {
+    try {
+      const response = await client.chat.completions.create({
+        model: 'sonar',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      const text = response.choices[0]?.message?.content || '';
+      const lower = text.toLowerCase();
+      const cited = variants.some(v => lower.includes(v));
+      results.push({
+        prompt,
+        response: text.substring(0, 500),
+        cited,
+        mentionedDomains: extractMentionedDomains(text),
+        snippet: cited ? findSnippet(text, variants) : null,
+      });
+    } catch {
+      results.push({ prompt, response: 'Error querying engine', cited: false, mentionedDomains: [], snippet: null });
+    }
+  }
+
+  const citedCount = results.filter(r => r.cited).length;
+  return {
+    engine: 'Perplexity',
     results,
     citedCount,
     totalPrompts: results.length,

@@ -19,6 +19,13 @@ interface AiProbe {
   status: 'cited' | 'partial' | 'missing';
 }
 
+interface MultiEngineProbe {
+  claude: AiProbe | null;
+  openai: AiProbe | null;
+  perplexity: AiProbe | null;
+  prompts: string[];
+}
+
 interface RawFindings {
   robots?: {
     gptBotDisallowed?: boolean;
@@ -48,7 +55,11 @@ interface RawFindings {
   wordCount?: number;
   lastModified?: string | null;
   schemaMarkup?: unknown[];
-  aiProbe?: AiProbe | null;
+  aiProbe?: AiProbe | MultiEngineProbe | null;
+}
+
+function isMultiEngineProbe(probe: AiProbe | MultiEngineProbe): probe is MultiEngineProbe {
+  return 'claude' in probe;
 }
 
 type FindingItem = { pass: boolean; text: string } | { meta: string };
@@ -249,20 +260,32 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     { label: 'Brand Mentions', key: 'brand', score: 0, getFindings: null },
   ];
 
-  const aiProbe = rf?.aiProbe;
-  const claudeStatus = aiProbe
-    ? aiProbe.status.toUpperCase()
-    : 'PENDING';
+  const rawProbe = rf?.aiProbe ?? null;
+  const claudeProbe: AiProbe | null = rawProbe
+    ? isMultiEngineProbe(rawProbe) ? rawProbe.claude : rawProbe
+    : null;
+  const openaiProbe: AiProbe | null = rawProbe && isMultiEngineProbe(rawProbe) ? rawProbe.openai : null;
+  const perplexityProbe: AiProbe | null = rawProbe && isMultiEngineProbe(rawProbe) ? rawProbe.perplexity : null;
+
+  const probeStatus = (probe: AiProbe | null): string => {
+    if (!probe) return 'PENDING';
+    if (probe.results.length === 0) return 'COMING SOON';
+    return probe.status.toUpperCase();
+  };
+
+  const probeComingSoon = (probe: AiProbe | null): boolean =>
+    !probe || probe.results.length === 0;
 
   const engines = [
-    { name: 'ChatGPT', bg: '#10A37F', icon: '✦', status: 'PARTIAL', comingSoon: true },
-    { name: 'Perplexity', bg: '#20808D', icon: '◎', status: 'MISSING', comingSoon: true },
-    { name: 'Google AI', bg: 'linear-gradient(135deg,#4285F4,#34A853)', icon: '◈', status: 'PARTIAL', comingSoon: true },
-    { name: 'Claude', bg: '#D97757', icon: '◆', status: claudeStatus, comingSoon: false },
+    { name: 'ChatGPT', bg: '#10A37F', icon: '✦', probe: openaiProbe },
+    { name: 'Perplexity', bg: '#20808D', icon: '◎', probe: perplexityProbe },
+    { name: 'Google AI', bg: 'linear-gradient(135deg,#4285F4,#34A853)', icon: '◈', probe: null as AiProbe | null },
+    { name: 'Claude', bg: '#D97757', icon: '◆', probe: claudeProbe },
   ];
 
-  const samplePrompts = aiProbe?.results?.length
-    ? aiProbe.results
+  const primaryProbe = claudeProbe ?? openaiProbe ?? perplexityProbe;
+  const samplePrompts = primaryProbe?.results?.length
+    ? primaryProbe.results
     : [
         { prompt: `Best tools for ${domain.split('.')[0]} businesses`, cited: false, snippet: null },
         { prompt: `How does ${domain} compare to alternatives?`, cited: false, snippet: null },
@@ -417,19 +440,23 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
           <div className={styles.reportCard}>
             <h3 className={styles.cardTitle}>How each AI engine sees you</h3>
             <div className={styles.engines}>
-              {engines.map((eng) => (
-                <div key={eng.name} className={styles.engineResult}>
-                  <div className={styles.erName}>
-                    <span className={styles.erIcon} style={{ background: eng.bg }}>{eng.icon}</span>
-                    <span>{eng.name}</span>
+              {engines.map((eng) => {
+                const status = probeStatus(eng.probe);
+                const comingSoon = probeComingSoon(eng.probe);
+                return (
+                  <div key={eng.name} className={styles.engineResult}>
+                    <div className={styles.erName}>
+                      <span className={styles.erIcon} style={{ background: eng.bg }}>{eng.icon}</span>
+                      <span>{eng.name}</span>
+                    </div>
+                    {comingSoon ? (
+                      <span className={`${styles.erBadge} ${styles.erBadgeMissing}`} title="Coming soon">COMING SOON</span>
+                    ) : (
+                      <span className={`${styles.erBadge} ${badgeClass(status)}`}>{status}</span>
+                    )}
                   </div>
-                  {eng.comingSoon ? (
-                    <span className={`${styles.erBadge} ${styles.erBadgeMissing}`} title="Coming soon">COMING SOON</span>
-                  ) : (
-                    <span className={`${styles.erBadge} ${badgeClass(eng.status)}`}>{eng.status}</span>
-                  )}
-                </div>
-              ))}
+                );
+              })}
             </div>
           </div>
         </div>
@@ -437,11 +464,11 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
         {/* Sample Prompts */}
         <div className={styles.reportCard} style={{ marginTop: 24 }}>
           <h3 className={styles.cardTitle}>
-            {aiProbe ? 'Claude AI — sample prompts tested' : 'Sample prompts where you\'re not cited'}
+            {primaryProbe ? `${primaryProbe.engine} — sample prompts tested` : 'Sample prompts where you\'re not cited'}
           </h3>
-          {aiProbe && (
+          {primaryProbe && (
             <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16, marginTop: -8 }}>
-              {aiProbe.citedCount} of {aiProbe.totalPrompts} prompts cited your domain
+              {primaryProbe.citedCount} of {primaryProbe.totalPrompts} prompts cited your domain
             </p>
           )}
           <div className={styles.prompts}>
