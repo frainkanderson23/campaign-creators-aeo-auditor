@@ -254,35 +254,80 @@ async function crawlSinglePage(url: string, originHost: string): Promise<CrawlPa
 }
 
 function extractIndustry(pages: CrawlPage[]): string {
-  for (const page of pages.slice(0, 3)) {
-    if (page.metaDescription) return page.metaDescription;
-    const ogDesc = page.openGraphTags?.['og:description'];
-    if (ogDesc) return ogDesc;
-    if (page.h1) return page.h1;
+  const homepage = pages[0];
+  if (!homepage) return 'digital services';
+
+  const industryKeywords = [
+    'hubspot', 'marketing', 'seo', 'saas', 'ecommerce', 'e-commerce',
+    'consulting', 'agency', 'software', 'fintech', 'healthcare',
+    'real estate', 'legal', 'accounting', 'insurance', 'education',
+    'manufacturing', 'construction', 'restaurant', 'fitness', 'dental',
+    'automotive', 'travel', 'logistics', 'recruitment', 'staffing',
+    'cybersecurity', 'ai', 'data', 'analytics', 'design', 'development',
+    'web design', 'app development', 'cloud', 'hosting', 'crm',
+    'automation', 'implementation', 'integration', 'migration'
+  ];
+
+  const allText = [
+    homepage.h1 || '',
+    homepage.title || '',
+    homepage.metaDescription || '',
+    ...(homepage.h2s || [])
+  ].join(' ').toLowerCase();
+
+  const found = industryKeywords.filter(kw => allText.includes(kw));
+
+  if (found.length >= 2) {
+    return found.slice(0, 2).join(' ');
   }
-  return '';
+  if (found.length === 1) {
+    return found[0] + ' services';
+  }
+
+  const h1Words = (homepage.h1 || '').split(/\s+/).slice(0, 4).join(' ');
+  return h1Words || 'digital services';
 }
 
 function extractTopics(pages: CrawlPage[]): string[] {
-  const topics = new Set<string>();
-  for (const page of pages.slice(0, 5)) {
-    if (page.h2s) {
-      for (const h2 of page.h2s.slice(0, 3)) topics.add(h2);
+  const topics: string[] = [];
+  const seen = new Set<string>();
+
+  for (const page of pages) {
+    if (page.h1) {
+      const h1 = page.h1.trim();
+      if (h1.length > 3 && h1.length < 60 && !h1.toLowerCase().match(/^(home|about|contact|menu|welcome|blog)/)) {
+        const lower = h1.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          topics.push(h1);
+        }
+      }
     }
-    if (page.title) topics.add(page.title);
+
+    for (const h2 of (page.h2s || [])) {
+      const trimmed = h2.trim();
+      if (trimmed.length > 3 && trimmed.length < 50 && !trimmed.toLowerCase().match(/^(about|contact|menu|related|other|ready to|interested)/)) {
+        const lower = trimmed.toLowerCase();
+        if (!seen.has(lower)) {
+          seen.add(lower);
+          topics.push(trimmed);
+        }
+      }
+    }
   }
-  return Array.from(topics).slice(0, 6);
+
+  return topics.slice(0, 6);
 }
 
-function extractCompanyName(pages: CrawlPage[]): string {
-  for (const page of pages) {
-    const siteName = page.openGraphTags?.['og:site_name'];
-    if (siteName) return siteName;
-    const ogTitle = page.openGraphTags?.['og:title'];
-    if (ogTitle) return ogTitle;
-    if (page.title) return page.title;
+function extractCompanyName(pages: CrawlPage[], domain: string): string {
+  const homepage = pages[0];
+  if (homepage?.title) {
+    const parts = homepage.title.split(/[|–—·]/);
+    if (parts.length >= 2) {
+      return parts[parts.length - 1].trim();
+    }
   }
-  return '';
+  return domain.replace(/^www\./, '').split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 export const runAudit = inngest.createFunction(
@@ -364,7 +409,7 @@ export const runAudit = inngest.createFunction(
       const { crawledPages } = crawlResult;
       const industry = extractIndustry(crawledPages);
       const topics = extractTopics(crawledPages);
-      const companyName = extractCompanyName(crawledPages);
+      const companyName = extractCompanyName(crawledPages, domainUrl);
       try {
         return await probeClaudeVisibility(domainUrl, companyName, industry, topics);
       } catch (err) {
