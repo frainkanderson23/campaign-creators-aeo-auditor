@@ -955,15 +955,38 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
 
         {/* CTA Card */}
         <div className={styles.ctaCard}>
-          <h2>Want help executing?</h2>
-          <p>
-            Our AEO specialists will implement these recommendations and get your brand cited by AI engines
-            within 90 days.
-          </p>
-          <div className={styles.ctaActions}>
-            <button className={styles.ctaBtnPrimary}>Book a strategy call</button>
-            <button className={styles.ctaBtnSecondary}>View pricing</button>
+          <div className={styles.ctaScorePill}>
+            <span className={styles.ctaScoreCircle}>{auditData.overall_score}</span>
+            <span className={styles.ctaScoreMeta}>
+              Your score · <strong>{recs.length}</strong> fixes identified · <strong>{totalAiCited} of {totalAiPrompts}</strong> AI prompts cited you
+            </span>
           </div>
+          <h2 className={styles.ctaHeading}>Want help executing?</h2>
+          <p className={styles.ctaSubtext}>
+            Our AEO specialists will implement these recommendations and get your brand cited by AI engines within 90 days.
+          </p>
+          <div className={styles.ctaBtnRow}>
+            <a href="#" className={styles.ctaBtnPrimary}>Book a strategy call →</a>
+            <a
+              href="https://www.campaigncreators.com/aeo"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.ctaBtnSecondary}
+            >
+              See our AEO services
+            </a>
+          </div>
+          <p className={styles.ctaBlogRow}>
+            <strong>Not ready to talk yet?</strong> Get AEO insights, strategy breakdowns, and what&apos;s working right now — straight from the team doing this work.{' '}
+            <a
+              href="https://www.campaigncreators.com/blog/topic/seo-aeo-geo"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Read the AEO blog →
+            </a>
+          </p>
+          <p className={styles.ctaFooter}>No commitment required · You keep the roadmap either way</p>
         </div>
 
           </div>{/* end blurred wrapper */}
