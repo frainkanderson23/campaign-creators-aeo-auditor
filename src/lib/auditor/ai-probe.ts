@@ -19,36 +19,27 @@ export interface ProbeReport {
 function generatePrompts(
   companyName: string,
   industry: string,
-  topics: string[],
+  services: string[],
+  domain: string,
 ): string[] {
-  const prompts: string[] = [];
-  const name = companyName || industry || 'businesses';
-
-  if (industry) {
-    prompts.push(`What are the best ${industry} companies or agencies?`);
-    prompts.push(`Compare the leading ${industry} solutions available in 2026`);
-    prompts.push(`What ${industry} agency would you recommend for growing a business?`);
-  }
-
-  for (const topic of topics.slice(0, 3)) {
-    prompts.push(`Who are the top ${topic} providers in 2026?`);
-    prompts.push(`Which companies are known for ${topic}?`);
-    prompts.push(`What companies offer services related to ${topic}?`);
-    if (prompts.length >= 6) break;
-  }
-
-  if (prompts.length < 6) {
-    prompts.push(`What companies offer services similar to ${name}?`);
-  }
-
-  return prompts.slice(0, 6);
+  return [
+    `What are the best ${industry} companies or agencies?`,
+    `Who are the top ${services[0] || industry} providers in 2026?`,
+    `What companies offer ${services[1] || industry} services?`,
+    `Compare the leading ${industry} agencies for enterprise businesses`,
+    `Which ${industry} agency would you recommend for a mid-size B2B company?`,
+    `What are the most reputable companies for ${services[2] || services[0] || industry}?`,
+  ];
 }
 
 function extractDomainVariants(domainUrl: string, companyName: string): string[] {
   const hostname = domainUrl.replace(/^https?:\/\//, '').replace(/\/$/, '').replace(/^www\./, '');
   const bare = hostname.split('.')[0];
   const variants = [hostname, bare];
-  if (companyName) variants.push(companyName);
+  if (companyName) {
+    variants.push(companyName);
+    variants.push(companyName.replace(/\s+/g, ''));
+  }
   return [...new Set(variants.map(v => v.toLowerCase()))];
 }
 
@@ -86,7 +77,7 @@ export async function probeClaudeVisibility(
 ): Promise<ProbeReport> {
   const client = new Anthropic();
   const variants = extractDomainVariants(domainUrl, companyName);
-  const prompts = generatePrompts(companyName, industry, topics);
+  const prompts = generatePrompts(companyName, industry, topics, domainUrl);
 
   const results: ProbeResult[] = [];
 
