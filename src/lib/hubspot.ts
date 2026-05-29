@@ -292,7 +292,6 @@ export async function syncAeoLead(payload: AeoLeadPayload): Promise<HubSpotConta
     lastname: lastName,
     website: payload.auditedDomain,
     lifecyclestage: 'lead',
-    hs_lead_status: 'NEW',
 
     // Custom AEO properties (auto-created by ensurePropertiesExist)
     aeo_overall_score: payload.overallScore,
