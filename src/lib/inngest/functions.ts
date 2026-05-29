@@ -2,7 +2,7 @@ import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
 import { inngest } from './client';
-import { runScorers } from '@/lib/scoring';
+import { runScorers, getGrade } from '@/lib/scoring';
 import { probeWithPrompts, probeOpenAI, probePerplexity, probeGoogleAI } from '@/lib/auditor/ai-probe';
 import type { CrawlPage, CrawlRobotsData } from '@/types/audit';
 
@@ -416,6 +416,35 @@ export const runAudit = inngest.createFunction(
         aiProbe: aiProbeResult,
       };
 
+      let aiTotalCited = 0;
+      let aiTotalPrompts = 0;
+      const aiEngines = [aiProbeResult.claude, aiProbeResult.openai, aiProbeResult.perplexity, aiProbeResult.google];
+      for (const engine of aiEngines) {
+        if (engine && engine.results && engine.results.length > 0) {
+          aiTotalCited += engine.citedCount;
+          aiTotalPrompts += engine.totalPrompts;
+        }
+      }
+      const aiCitationScore = aiTotalPrompts > 0 ? (aiTotalCited / aiTotalPrompts) * 100 : 0;
+      const hasAiData = aiTotalPrompts > 0;
+
+      let overallScore: number;
+      if (hasAiData) {
+        overallScore = Math.round(
+          (aiCitationScore * 0.40) +
+          (scored.answerability_score * 0.12) +
+          (scored.brevity_score * 0.12) +
+          (scored.trust_score * 0.12) +
+          (scored.structure_score * 0.12) +
+          (scored.freshness_score * 0.12)
+        );
+      } else {
+        overallScore = Math.round(
+          (scored.answerability_score + scored.brevity_score + scored.trust_score + scored.structure_score + scored.freshness_score) / 5
+        );
+      }
+      const overallGrade = getGrade(overallScore);
+
       await supabase.from('audit_results').upsert(
         {
           audit_request_id: auditId,
@@ -429,8 +458,8 @@ export const runAudit = inngest.createFunction(
           freshness_grade: scored.freshness_grade,
           brevity_score: Math.round(scored.brevity_score),
           brevity_grade: scored.brevity_grade,
-          overall_score: Math.round(scored.overall_score),
-          overall_grade: scored.overall_grade,
+          overall_score: overallScore,
+          overall_grade: overallGrade,
           raw_findings: rawFindings,
           updated_at: new Date().toISOString(),
         },

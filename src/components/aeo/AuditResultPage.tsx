@@ -284,6 +284,22 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   const perplexityProbe: AiProbe | null = rawProbe && isMultiEngineProbe(rawProbe) ? rawProbe.perplexity : null;
   const googleProbe: AiProbe | null = rawProbe && isMultiEngineProbe(rawProbe) ? rawProbe.google ?? null : null;
 
+  let totalAiCited = 0;
+  let totalAiPrompts = 0;
+  if (rawProbe) {
+    const probeList = isMultiEngineProbe(rawProbe)
+      ? [rawProbe.claude, rawProbe.openai, rawProbe.perplexity, rawProbe.google ?? null]
+      : [rawProbe as AiProbe];
+    for (const p of probeList) {
+      if (p && p.results && p.results.length > 0) {
+        totalAiCited += p.citedCount;
+        totalAiPrompts += p.totalPrompts;
+      }
+    }
+  }
+  const aiCitationScore = totalAiPrompts > 0 ? (totalAiCited / totalAiPrompts) * 100 : 0;
+  const hasAiData = totalAiPrompts > 0;
+
   const probeStatus = (probe: AiProbe | null): string => {
     if (!probe) return 'PENDING';
     if (probe.results.length === 0) return 'COMING SOON';
@@ -391,15 +407,36 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
 
           <div className={styles.scoreSummary}>
             <div className={styles.scoreSubtitle}>Your AEO Visibility Score</div>
-            <h2>Your brand is being skipped by AI engines answering your customers&apos; questions</h2>
+            {target >= 90 ? (
+              <h2>Excellent AI visibility. Your brand is well-represented across AI search engines.</h2>
+            ) : target >= 70 ? (
+              <h2>Your brand has strong AI visibility with room for improvement.</h2>
+            ) : target >= 50 ? (
+              <h2>Your brand has limited AI visibility. You&apos;re being cited in some queries but competitors are getting more mentions.</h2>
+            ) : (
+              <h2>
+                {hasAiData
+                  ? `Your brand is nearly invisible to AI-powered search. AI engines cited you in only ${totalAiCited} of ${totalAiPrompts} prompts tested.`
+                  : "Your brand is being skipped by AI engines answering your customers’ questions"}
+              </h2>
+            )}
             <p>
-              With a score of <strong>{auditData.overall_score}/100</strong>, {domain} is nearly invisible to
-              AI-powered search. When potential customers ask ChatGPT, Perplexity, or Google AI about solutions
-              in your space, your brand isn&apos;t being cited — your competitors are.
+              With a score of <strong>{auditData.overall_score}/100</strong>,{' '}
+              {target >= 70
+                ? `${domain} is well-positioned in AI search but can improve citation rates further.`
+                : target >= 50
+                ? `${domain} is gaining AI visibility but missing from many relevant queries.`
+                : `${domain} is nearly invisible to AI-powered search. When potential customers ask ChatGPT, Perplexity, or Google AI about solutions in your space, your brand isn’t being cited — your competitors are.`}
             </p>
             <div className={styles.scoreCallout}>
-              <strong>⚠ Estimated impact:</strong> Brands with sub-50 AEO scores lose an estimated 23–41%
-              of AI-referred traffic to competitors who have optimized for answer engine discovery.
+              <strong>⚠ Estimated impact:</strong>{' '}
+              {hasAiData && aiCitationScore < 25
+                ? 'Critical: Your brand appeared in less than 25% of AI responses. Competitors are capturing this traffic.'
+                : hasAiData && aiCitationScore <= 50
+                ? 'Your brand is partially visible but missing from most AI recommendations.'
+                : hasAiData
+                ? "Good AI presence, but there’s still room to improve citation rates."
+                : 'Brands with sub-50 AEO scores lose an estimated 23–41% of AI-referred traffic to competitors who have optimized for answer engine discovery.'}
             </div>
           </div>
         </div>
