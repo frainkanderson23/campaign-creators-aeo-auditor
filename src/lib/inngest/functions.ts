@@ -5,7 +5,7 @@ import { runScorers } from '@/lib/scoring';
 import { probeClaudeVisibility } from '@/lib/auditor/ai-probe';
 import type { CrawlPage, CrawlRobotsData } from '@/types/audit';
 
-const MAX_PAGES = 50;
+const MAX_PAGES = 200;
 const MAX_H2 = 10;
 const MAX_BODY_CHARS = 5000;
 const MAX_LINKS_PER_PAGE = 20;
