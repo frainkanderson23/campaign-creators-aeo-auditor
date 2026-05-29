@@ -2,7 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import * as cheerio from 'cheerio';
-import { runScorers } from '@/lib/scoring';
+import { runScorers, getGrade } from '@/lib/scoring';
 import { probeClaudeVisibility } from '@/lib/auditor/ai-probe';
 import type { CrawlPage, CrawlRobotsData } from '@/types/audit';
 
@@ -497,6 +497,31 @@ export async function POST(req: NextRequest): Promise<Response> {
       aiProbe,
     };
 
+    let aiCitationScore = 0;
+    let aiTotalPrompts = 0;
+    if (aiProbe && aiProbe.results && aiProbe.results.length > 0 && aiProbe.totalPrompts > 0) {
+      aiCitationScore = (aiProbe.citedCount / aiProbe.totalPrompts) * 100;
+      aiTotalPrompts = aiProbe.totalPrompts;
+    }
+    const hasAiData = aiTotalPrompts > 0;
+
+    let overallScore: number;
+    if (hasAiData) {
+      overallScore = Math.round(
+        (aiCitationScore * 0.40) +
+        (scored.answerability_score * 0.12) +
+        (scored.brevity_score * 0.12) +
+        (scored.trust_score * 0.12) +
+        (scored.structure_score * 0.12) +
+        (scored.freshness_score * 0.12)
+      );
+    } else {
+      overallScore = Math.round(
+        (scored.answerability_score + scored.brevity_score + scored.trust_score + scored.structure_score + scored.freshness_score) / 5
+      );
+    }
+    const overallGrade = getGrade(overallScore);
+
     await supabase
       .from('audit_results')
       .upsert(
@@ -512,8 +537,8 @@ export async function POST(req: NextRequest): Promise<Response> {
           freshness_grade: scored.freshness_grade,
           brevity_score: Math.round(scored.brevity_score),
           brevity_grade: scored.brevity_grade,
-          overall_score: Math.round(scored.overall_score),
-          overall_grade: scored.overall_grade,
+          overall_score: overallScore,
+          overall_grade: overallGrade,
           raw_findings: rawFindings,
           updated_at: new Date().toISOString(),
         },
