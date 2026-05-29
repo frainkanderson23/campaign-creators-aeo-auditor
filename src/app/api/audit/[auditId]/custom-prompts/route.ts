@@ -11,15 +11,12 @@ export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
 export const maxDuration = 60;
 
-let client: SupabaseClient | undefined;
 function getSupabase(): SupabaseClient {
-  if (!client) {
-    client = createClient(
-      process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
-      process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
-    );
-  }
-  return client;
+  return createClient(
+    process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
+    process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
+    { auth: { autoRefreshToken: false, persistSession: false } },
+  );
 }
 
 const UUID_REGEX =

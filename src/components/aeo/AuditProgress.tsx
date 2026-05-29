@@ -266,9 +266,6 @@ export default function AuditProgress({ domain, auditId }: Props) {
         })}
       </div>
 
-      {/* ── Data stream bar ────────────────────────────── */}
-      <div className={styles.dataStream} />
-
       {/* ── Progress bar ───────────────────────────────── */}
       <div className={styles.progressSection}>
         <div className={styles.progressTrack}>
