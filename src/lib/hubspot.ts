@@ -104,6 +104,13 @@ function getToken(): string | null {
   return process.env.HUBSPOT_PRIVATE_APP_TOKEN?.trim() || null;
 }
 
+/** HubSpot date properties require midnight UTC in milliseconds */
+function toHubSpotDate(isoString: string): number {
+  const d = new Date(isoString);
+  const midnightUtc = Date.UTC(d.getUTCFullYear(), d.getUTCMonth(), d.getUTCDate());
+  return midnightUtc;
+}
+
 function getHeaders(token: string) {
   return {
     Authorization: `Bearer ${token}`,
@@ -306,7 +313,7 @@ export async function syncAeoLead(payload: AeoLeadPayload): Promise<HubSpotConta
     aeo_engines_missing: payload.enginesMissing.join(', ') || 'None',
     aeo_citation_rate: payload.citationRate,
     aeo_top_weakness: payload.topWeakness,
-    aeo_audit_date: payload.auditDate,
+    aeo_audit_date: toHubSpotDate(payload.auditDate),
     aeo_lead_source: 'AEO Auditor',
   };
 
