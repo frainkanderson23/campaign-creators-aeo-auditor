@@ -1,8 +1,9 @@
+import Anthropic from '@anthropic-ai/sdk';
 import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
 import { inngest } from './client';
 import { runScorers } from '@/lib/scoring';
-import { probeClaudeVisibility } from '@/lib/auditor/ai-probe';
+import { probeWithPrompts } from '@/lib/auditor/ai-probe';
 import type { CrawlPage, CrawlRobotsData } from '@/types/audit';
 
 const MAX_PAGES = 200;
@@ -253,81 +254,59 @@ async function crawlSinglePage(url: string, originHost: string): Promise<CrawlPa
   };
 }
 
-function extractIndustry(pages: CrawlPage[]): string {
+async function generateSmartPrompts(pages: CrawlPage[], domain: string): Promise<{ companyName: string; industry: string; prompts: string[] }> {
+  const client = new Anthropic();
+
   const homepage = pages[0];
-  if (!homepage) return 'digital services';
+  const siteContext = [
+    `Domain: ${domain}`,
+    `Title: ${homepage?.title || ''}`,
+    `H1: ${homepage?.h1 || ''}`,
+    `Meta description: ${homepage?.metaDescription || ''}`,
+    `Key pages: ${pages.slice(0, 10).map(p => p.title || p.h1 || p.url).join('; ')}`,
+    `H2 headings: ${pages.flatMap(p => p.h2s || []).slice(0, 15).join('; ')}`,
+  ].join('\n');
 
-  const industryKeywords = [
-    'hubspot', 'marketing', 'seo', 'saas', 'ecommerce', 'e-commerce',
-    'consulting', 'agency', 'software', 'fintech', 'healthcare',
-    'real estate', 'legal', 'accounting', 'insurance', 'education',
-    'manufacturing', 'construction', 'restaurant', 'fitness', 'dental',
-    'automotive', 'travel', 'logistics', 'recruitment', 'staffing',
-    'cybersecurity', 'ai', 'data', 'analytics', 'design', 'development',
-    'web design', 'app development', 'cloud', 'hosting', 'crm',
-    'automation', 'implementation', 'integration', 'migration'
-  ];
+  const response = await client.messages.create({
+    model: 'claude-sonnet-4-6',
+    max_tokens: 500,
+    messages: [{
+      role: 'user',
+      content: `Analyze this website and generate search prompts.
 
-  const allText = [
-    homepage.h1 || '',
-    homepage.title || '',
-    homepage.metaDescription || '',
-    ...(homepage.h2s || [])
-  ].join(' ').toLowerCase();
+${siteContext}
 
-  const found = industryKeywords.filter(kw => allText.includes(kw));
+Return ONLY a JSON object with:
+1. "companyName": the company/brand name (e.g. "SmartBug Media", "Campaign Creators")
+2. "industry": a 2-4 word industry description (e.g. "HubSpot marketing agency", "B2B SaaS consulting", "ecommerce platform")
+3. "prompts": an array of exactly 6 questions that a potential customer would type into ChatGPT when looking for this type of company. Make them natural, specific to the industry, and varied. Examples of good prompts:
+   - "What are the best HubSpot partner agencies for enterprise companies?"
+   - "Which marketing agencies specialize in B2B lead generation?"
+   - "Who are the top inbound marketing consultants in 2026?"
+   Do NOT use the company's own marketing copy. Write questions a buyer would ask BEFORE they know about this company.
 
-  if (found.length >= 2) {
-    return found.slice(0, 2).join(' ');
+Return valid JSON only, no markdown fences.`,
+    }],
+  });
+
+  try {
+    const text = response.content[0].type === 'text' ? response.content[0].text : '';
+    const parsed = JSON.parse(text.trim());
+    return {
+      companyName: parsed.companyName || domain.replace(/^www\./, '').split('.')[0],
+      industry: parsed.industry || 'digital services',
+      prompts: Array.isArray(parsed.prompts) ? parsed.prompts.slice(0, 6) : [],
+    };
+  } catch {
+    return {
+      companyName: domain.replace(/^www\./, '').split('.')[0],
+      industry: 'digital services',
+      prompts: [
+        `What are the best companies in the ${domain} industry?`,
+        `Which agencies would you recommend for businesses like ${domain}?`,
+      ],
+    };
   }
-  if (found.length === 1) {
-    return found[0] + ' services';
-  }
-
-  const h1Words = (homepage.h1 || '').split(/\s+/).slice(0, 4).join(' ');
-  return h1Words || 'digital services';
-}
-
-function extractTopics(pages: CrawlPage[]): string[] {
-  const topics: string[] = [];
-  const seen = new Set<string>();
-
-  for (const page of pages) {
-    if (page.h1) {
-      const h1 = page.h1.trim();
-      if (h1.length > 3 && h1.length < 60 && !h1.toLowerCase().match(/^(home|about|contact|menu|welcome|blog)/)) {
-        const lower = h1.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.add(lower);
-          topics.push(h1);
-        }
-      }
-    }
-
-    for (const h2 of (page.h2s || [])) {
-      const trimmed = h2.trim();
-      if (trimmed.length > 3 && trimmed.length < 50 && !trimmed.toLowerCase().match(/^(about|contact|menu|related|other|ready to|interested)/)) {
-        const lower = trimmed.toLowerCase();
-        if (!seen.has(lower)) {
-          seen.add(lower);
-          topics.push(trimmed);
-        }
-      }
-    }
-  }
-
-  return topics.slice(0, 6);
-}
-
-function extractCompanyName(pages: CrawlPage[], domain: string): string {
-  const homepage = pages[0];
-  if (homepage?.title) {
-    const parts = homepage.title.split(/[|–—·]/);
-    if (parts.length >= 2) {
-      return parts[parts.length - 1].trim();
-    }
-  }
-  return domain.replace(/^www\./, '').split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase());
 }
 
 export const runAudit = inngest.createFunction(
@@ -407,11 +386,9 @@ export const runAudit = inngest.createFunction(
 
     const aiProbeResult = await step.run('ai-probe', async () => {
       const { crawledPages } = crawlResult;
-      const industry = extractIndustry(crawledPages);
-      const topics = extractTopics(crawledPages);
-      const companyName = extractCompanyName(crawledPages, domainUrl);
+      const { companyName, prompts } = await generateSmartPrompts(crawledPages, new URL(domainUrl).hostname);
       try {
-        return await probeClaudeVisibility(domainUrl, companyName, industry, topics);
+        return await probeWithPrompts(domainUrl, companyName, prompts);
       } catch (err) {
         console.error('AI probe failed:', err);
         return null;

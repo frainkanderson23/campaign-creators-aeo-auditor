@@ -69,6 +69,47 @@ function extractMentionedDomains(text: string): string[] {
   return Array.from(seen);
 }
 
+export async function probeWithPrompts(
+  domain: string,
+  companyName: string,
+  prompts: string[],
+): Promise<ProbeReport> {
+  const client = new Anthropic();
+  const results: ProbeResult[] = [];
+  const variants = extractDomainVariants(domain, companyName);
+
+  for (const prompt of prompts) {
+    try {
+      const response = await client.messages.create({
+        model: 'claude-sonnet-4-6',
+        max_tokens: 1024,
+        messages: [{ role: 'user', content: prompt }],
+      });
+      const text = response.content[0].type === 'text' ? response.content[0].text : '';
+      const lower = text.toLowerCase();
+      const cited = variants.some(v => lower.includes(v));
+      results.push({
+        prompt,
+        response: text.substring(0, 500),
+        cited,
+        mentionedDomains: extractMentionedDomains(text),
+        snippet: cited ? findSnippet(text, variants) : null,
+      });
+    } catch {
+      results.push({ prompt, response: 'Error querying engine', cited: false, mentionedDomains: [], snippet: null });
+    }
+  }
+
+  const citedCount = results.filter(r => r.cited).length;
+  return {
+    engine: 'Claude',
+    results,
+    citedCount,
+    totalPrompts: results.length,
+    status: citedCount >= 4 ? 'cited' : citedCount >= 1 ? 'partial' : 'missing',
+  };
+}
+
 export async function probeClaudeVisibility(
   domainUrl: string,
   companyName: string,
