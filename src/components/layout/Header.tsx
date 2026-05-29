@@ -21,7 +21,7 @@ export function Header() {
           <a className={styles.navLink} href="#sample">Sample report</a>
           <a
             className={styles.navLink}
-            href="https://campaigncreators.com/blog"
+            href="https://www.campaigncreators.com/blog/topic/seo-aeo-geo"
             target="_blank"
             rel="noopener noreferrer"
           >
