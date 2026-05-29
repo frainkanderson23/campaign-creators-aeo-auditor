@@ -295,7 +295,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     setCustomLoading(true);
     setCustomError(null);
     try {
-      const res = await fetch(`/api/audit/${auditData.id}/custom-prompts`, {
+      const res = await fetch(`/api/audit/${requestData.id}/custom-prompts`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({ prompts }),

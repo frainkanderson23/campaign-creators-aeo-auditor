@@ -227,35 +227,65 @@ export async function probeGoogleAI(
       const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
       const data = await res.json();
 
-      const aiOverview = data.ai_overview;
       let aiText = '';
       let cited = false;
 
-      if (aiOverview) {
-        if (aiOverview.text_blocks) {
-          aiText = aiOverview.text_blocks.map((b: { snippet?: string; text?: string }) => b.snippet || b.text || '').join(' ');
-        } else if (aiOverview.snippet) {
-          aiText = aiOverview.snippet;
-        } else if (typeof aiOverview === 'string') {
-          aiText = aiOverview;
-        } else {
-          aiText = JSON.stringify(aiOverview).substring(0, 1000);
+      if (data.ai_overview) {
+        if (typeof data.ai_overview === 'string') {
+          aiText = data.ai_overview;
+        } else if (data.ai_overview.text) {
+          aiText = data.ai_overview.text;
+        } else if (data.ai_overview.text_blocks) {
+          // eslint-disable-next-line @typescript-eslint/no-explicit-any
+          aiText = data.ai_overview.text_blocks.map((b: any) => {
+            if (typeof b === 'string') return b;
+            return b.snippet || b.text || b.title || '';
+          }).filter(Boolean).join(' ');
+        } else if (data.ai_overview.snippet) {
+          aiText = data.ai_overview.snippet;
         }
+      }
 
-        const lower = aiText.toLowerCase();
-        cited = lower.includes(domainLower) || lower.includes(nameLower);
+      if (!aiText && data.answer_box) {
+        aiText = data.answer_box.snippet || data.answer_box.answer || '';
+      }
 
-        if (!cited && aiOverview.sources) {
-          for (const source of aiOverview.sources) {
-            if (source.link?.toLowerCase().includes(domainLower) ||
-                source.title?.toLowerCase().includes(nameLower)) {
+      if (!aiText && data.knowledge_graph?.description) {
+        aiText = data.knowledge_graph.description;
+      }
+
+      // Discard garbled/encoded blobs (e.g. raw page_token responses)
+      if (aiText && (aiText.startsWith('{"page_token"') || /[\x00-\x08\x0E-\x1F]/.test(aiText))) {
+        aiText = '';
+      }
+
+      if (!aiText) {
+        aiText = 'No AI Overview appeared for this query';
+        if (data.organic_results) {
+          for (const result of data.organic_results.slice(0, 5)) {
+            if (result.link?.toLowerCase().includes(domainLower)) {
               cited = true;
+              aiText = `Found in organic results: ${result.title}`;
               break;
             }
           }
         }
-      } else {
-        aiText = 'No AI Overview appeared for this query';
+      }
+
+      const lower = aiText.toLowerCase();
+      if (!cited) {
+        cited = lower.includes(domainLower) || lower.includes(nameLower);
+      }
+
+      if (!cited && data.ai_overview?.sources) {
+        for (const source of data.ai_overview.sources) {
+          const link = (source.link || source.url || '').toLowerCase();
+          const title = (source.title || source.name || '').toLowerCase();
+          if (link.includes(domainLower) || title.includes(nameLower)) {
+            cited = true;
+            break;
+          }
+        }
       }
 
       results.push({
