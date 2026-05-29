@@ -1,0 +1,452 @@
+/* AuditProgress.module.css — camelCase, design tokens via var(--*) */
+
+.wrapper {
+  max-width: 760px;
+  margin: 0 auto;
+  padding: 48px 24px 96px;
+  display: flex;
+  flex-direction: column;
+  gap: 32px;
+}
+
+/* ── Header ──────────────────────────────────────────────── */
+
+.header {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.backLink {
+  display: inline-block;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-3);
+  text-decoration: none;
+  letter-spacing: 0.02em;
+  transition: color 120ms ease;
+  margin-bottom: 4px;
+}
+
+.backLink:hover {
+  color: var(--ink);
+}
+
+.domainTitle {
+  font-family: var(--font-mono);
+  font-size: clamp(22px, 4vw, 32px);
+  font-weight: 500;
+  color: var(--ink);
+  margin: 0;
+  letter-spacing: -0.02em;
+}
+
+.headerMeta {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  color: var(--ink-2);
+  font-size: 13px;
+}
+
+.clockIcon {
+  width: 14px;
+  height: 14px;
+  flex-shrink: 0;
+  vertical-align: middle;
+}
+
+.auditId {
+  font-family: var(--font-mono);
+  font-size: 11px;
+  color: var(--ink-3);
+  background: var(--tint-1);
+  border: 1px solid var(--line);
+  border-radius: var(--radius-sm);
+  padding: 1px 6px;
+}
+
+/* ── Domain card ─────────────────────────────────────────── */
+
+.domainCard {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  padding: 20px;
+  background: var(--tint-1);
+  border-radius: var(--radius-lg);
+  border: 1px solid var(--line);
+}
+
+.faviconCircle {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  color: #fff;
+  font-size: 18px;
+  font-weight: 600;
+  font-family: var(--font-display);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.domainCardBody {
+  flex: 1;
+  min-width: 0;
+}
+
+.domainUrl {
+  font-family: var(--font-mono);
+  font-size: 13px;
+  font-weight: 500;
+  color: var(--ink);
+  margin-bottom: 4px;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  white-space: nowrap;
+}
+
+.domainMeta {
+  display: flex;
+  gap: 16px;
+  flex-wrap: wrap;
+}
+
+.domainMeta span {
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+.inProgressBadge {
+  display: inline-flex;
+  align-items: center;
+  border-radius: var(--radius-sm);
+  background: var(--accent);
+  color: var(--primary);
+  font-size: 11px;
+  font-weight: 700;
+  letter-spacing: 0.06em;
+  padding: 3px 8px;
+  white-space: nowrap;
+  flex-shrink: 0;
+}
+
+/* ── Pipeline ────────────────────────────────────────────── */
+
+.pipeline {
+  display: flex;
+  align-items: flex-start;
+  padding: 8px 0;
+}
+
+.pipeStage {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  text-align: center;
+  gap: 8px;
+  min-width: 0;
+}
+
+.pipeConnector {
+  flex-shrink: 0;
+  width: 24px;
+  height: 2px;
+  background: var(--line);
+  margin-top: 22px; /* center with 44px icon circle */
+  transition: background 300ms ease;
+}
+
+.pipeConnectorDone {
+  background: var(--good);
+}
+
+.pipeIconWrap {
+  position: relative;
+  width: 44px;
+  height: 44px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+}
+
+.pulseRing {
+  position: absolute;
+  inset: -7px;
+  border-radius: var(--radius-full);
+  border: 2px solid var(--primary);
+  opacity: 0.5;
+  animation: pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes pulse {
+  0%, 100% { opacity: 0.5; transform: scale(1); }
+  50%       { opacity: 0.1; transform: scale(1.18); }
+}
+
+.pipeIcon {
+  width: 44px;
+  height: 44px;
+  border-radius: var(--radius-full);
+  border: 1px solid var(--line);
+  background: var(--bg);
+  color: var(--ink-3);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+}
+
+.pipeIcon svg {
+  width: 20px;
+  height: 20px;
+}
+
+.pipeStage[data-state="active"] .pipeIcon {
+  background: var(--primary);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.pipeStage[data-state="done"] .pipeIcon {
+  background: var(--good);
+  border-color: var(--good);
+  color: #fff;
+}
+
+.pipeLabel {
+  font-size: 12px;
+  font-weight: 600;
+  color: var(--ink-3);
+  letter-spacing: 0.01em;
+  transition: color 200ms ease;
+}
+
+.pipeStage[data-state="active"] .pipeLabel {
+  color: var(--primary);
+}
+
+.pipeStage[data-state="done"] .pipeLabel {
+  color: var(--good);
+}
+
+.pipeSub {
+  font-size: 11px;
+  color: var(--ink-3);
+  line-height: 1.4;
+}
+
+/* ── Progress bar ────────────────────────────────────────── */
+
+.progressSection {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.progressTrack {
+  width: 100%;
+  height: 4px;
+  background: var(--line);
+  border-radius: var(--radius-full);
+  overflow: hidden;
+}
+
+.progressFill {
+  height: 100%;
+  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  border-radius: var(--radius-full);
+  transition: width 600ms ease;
+  min-width: 4px;
+}
+
+.progressLabel {
+  margin: 0;
+  font-family: var(--font-mono);
+  font-size: 12px;
+  color: var(--ink-2);
+}
+
+/* ── Live log ────────────────────────────────────────────── */
+
+.auditLog {
+  background: #0B1220;
+  border-radius: var(--radius-lg);
+  overflow: hidden;
+  border: 1px solid rgba(255, 255, 255, 0.06);
+}
+
+.logHeader {
+  padding: 10px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.06);
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  color: rgba(255, 255, 255, 0.35);
+  text-transform: uppercase;
+}
+
+.logBody {
+  padding: 14px 16px 16px;
+  min-height: 128px;
+  display: flex;
+  flex-direction: column;
+  gap: 3px;
+}
+
+.logLine {
+  display: flex;
+  gap: 10px;
+  align-items: baseline;
+  font-family: var(--font-mono);
+  font-size: 12.5px;
+  line-height: 1.6;
+  animation: logFadeIn 120ms ease forwards;
+}
+
+@keyframes logFadeIn {
+  from { opacity: 0; transform: translateY(3px); }
+  to   { opacity: 1; transform: none; }
+}
+
+.logTime {
+  color: rgba(255, 255, 255, 0.28);
+  flex-shrink: 0;
+}
+
+.logLevel {
+  flex-shrink: 0;
+  min-width: 36px;
+  font-weight: 700;
+}
+
+.logLevelInfo {
+  color: rgba(255, 255, 255, 0.38);
+}
+
+.logLevelOk {
+  color: #4ade80;
+}
+
+.logMsg {
+  color: rgba(255, 255, 255, 0.72);
+}
+
+.logCursor {
+  display: inline-block;
+  width: 8px;
+  height: 14px;
+  background: #4ade80;
+  border-radius: 1px;
+  margin-top: 4px;
+  animation: blink 1s step-end infinite;
+}
+
+@keyframes blink {
+  0%, 100% { opacity: 1; }
+  50%       { opacity: 0; }
+}
+
+/* ── Educational section ─────────────────────────────────── */
+
+.eduSection {
+  padding-top: 32px;
+  border-top: 1px solid var(--line);
+}
+
+.eduHeading {
+  margin: 0 0 24px;
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.08em;
+  text-transform: uppercase;
+  color: var(--ink-3);
+}
+
+.eduGrid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 24px;
+}
+
+.eduItem {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.eduNum {
+  font-size: 36px;
+  font-weight: 700;
+  color: var(--ink);
+  letter-spacing: -0.03em;
+  line-height: 1;
+}
+
+.eduText {
+  font-size: 12px;
+  color: var(--ink-2);
+  line-height: 1.5;
+}
+
+/* ── Responsive ──────────────────────────────────────────── */
+
+@media (max-width: 640px) {
+  .wrapper {
+    padding: 32px 16px 64px;
+    gap: 24px;
+  }
+
+  .pipeline {
+    overflow-x: auto;
+    padding-bottom: 4px;
+    /* enough room so each stage has at least 80px */
+    min-width: max-content;
+  }
+
+  .pipeStage {
+    min-width: 72px;
+  }
+
+  .pipeConnector {
+    width: 16px;
+  }
+
+  .pipeSub {
+    display: none;
+  }
+
+  .domainCard {
+    flex-wrap: wrap;
+    gap: 12px;
+  }
+
+  .domainMeta {
+    gap: 8px;
+  }
+
+  .eduGrid {
+    grid-template-columns: 1fr;
+    gap: 20px;
+  }
+
+  .headerMeta {
+    flex-wrap: wrap;
+  }
+}
+
+@media (min-width: 641px) and (max-width: 900px) {
+  .pipeSub {
+    font-size: 10px;
+  }
+
+  .pipeConnector {
+    width: 16px;
+  }
+}
