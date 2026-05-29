@@ -974,14 +974,6 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
             >
               Book a strategy call →
             </a>
-            <a
-              href="https://www.campaigncreators.com/aeo"
-              target="_blank"
-              rel="noopener noreferrer"
-              className={styles.ctaBtnSecondary}
-            >
-              See our AEO services
-            </a>
           </div>
           <p className={styles.ctaBlogRow}>
             <strong>Not ready to talk yet?</strong> Get AEO insights, strategy breakdowns, and what&apos;s working right now — straight from the team doing this work.{' '}
