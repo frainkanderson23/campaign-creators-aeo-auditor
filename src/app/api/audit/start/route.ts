@@ -2,6 +2,7 @@ import { NextResponse, type NextRequest } from 'next/server';
 import { createClient, type SupabaseClient } from '@supabase/supabase-js';
 import { z } from 'zod';
 import { checkRateLimit } from '@/lib/rateLimit';
+import { inngest } from '@/lib/inngest/client';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -166,22 +167,36 @@ export async function POST(request: NextRequest): Promise<Response> {
       return NextResponse.json({ error: 'Database error' }, { status: 500 });
     }
 
-    void fetch(
-      new URL(
-        '/api/audit/crawl',
-        process.env.NEXT_PUBLIC_APP_URL!.trim(),
-      ).toString(),
-      {
-        method: 'POST',
-        headers: {
-          Authorization: 'Bearer ' + process.env.INTERNAL_CRAWLER_SECRET!.trim(),
-          'Content-Type': 'application/json',
+    // Try Inngest first; fall back to the direct crawl route if it fails.
+    let inngestSent = false;
+    try {
+      await inngest.send({
+        name: 'audit/requested',
+        data: { auditId, domainUrl: normalizedUrl },
+      });
+      inngestSent = true;
+    } catch (err) {
+      console.error('Inngest send failed, falling back to direct crawl:', err);
+    }
+
+    if (!inngestSent) {
+      void fetch(
+        new URL(
+          '/api/audit/crawl',
+          process.env.NEXT_PUBLIC_APP_URL!.trim(),
+        ).toString(),
+        {
+          method: 'POST',
+          headers: {
+            Authorization: 'Bearer ' + process.env.INTERNAL_CRAWLER_SECRET!.trim(),
+            'Content-Type': 'application/json',
+          },
+          body: JSON.stringify({ auditId, domainUrl: normalizedUrl }),
         },
-        body: JSON.stringify({ auditId, domainUrl: normalizedUrl }),
-      },
-    ).catch(() => {
-      // Fire-and-forget; crawler logs its own failures.
-    });
+      ).catch(() => {
+        // Fire-and-forget; crawler logs its own failures.
+      });
+    }
 
     return NextResponse.json({ auditId }, { status: 201 });
   } catch (outerErr) { console.error("OUTER_ERROR:", outerErr);
