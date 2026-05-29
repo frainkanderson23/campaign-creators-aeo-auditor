@@ -9,10 +9,10 @@ interface Props {
 }
 
 const STAGES = [
-  { id: 'validate', icon: 'globe',    title: 'Validate',  sub: 'DNS · robots.txt',  activeAt: 0,  doneAt: 3        },
-  { id: 'crawl',    icon: 'search',   title: 'Crawl',     sub: 'Indexing pages',    activeAt: 3,  doneAt: 12       },
-  { id: 'query',    icon: 'brain',    title: 'Query AI',  sub: 'Engine checks',     activeAt: 12, doneAt: 30       },
-  { id: 'score',    icon: 'chart',    title: 'Score',     sub: 'AEO dimensions',    activeAt: 30, doneAt: 50       },
+  { id: 'validate', icon: 'globe',    title: 'Validate',  sub: 'DNS · robots.txt',  activeAt: 0,  doneAt: 4        },
+  { id: 'crawl',    icon: 'search',   title: 'Crawl',     sub: 'Indexing pages',    activeAt: 4,  doneAt: 25       },
+  { id: 'query',    icon: 'brain',    title: 'Query AI',  sub: 'Engine checks',     activeAt: 25, doneAt: 40       },
+  { id: 'score',    icon: 'chart',    title: 'Score',     sub: 'AEO dimensions',    activeAt: 40, doneAt: 50       },
   { id: 'report',   icon: 'document', title: 'Report',    sub: 'Generating',        activeAt: 50, doneAt: Infinity },
 ] as const;
 
@@ -25,21 +25,36 @@ function getStageState(activeAt: number, doneAt: number, elapsed: number, comple
   return 'pending';
 }
 
-interface LogEntry { time: string; level: 'INFO' | 'OK'; msg: string; }
+interface LogEntry { time: string; level: 'INFO' | 'OK' | 'WARN'; msg: string; }
 
 function buildLog(domain: string, elapsed: number, startTime: Date, completed: boolean): LogEntry[] {
   const ts = (offset: number) =>
     new Date(startTime.getTime() + offset * 1000).toTimeString().slice(0, 8);
 
-  const rows: [number, 'INFO' | 'OK', string][] = [
-    [0,  'INFO', `Audit request received for ${domain}`],
-    [2,  'OK',   'Domain verified · queued for processing'],
-    [5,  'INFO', 'Spawning crawler · respecting robots.txt'],
-    [10, 'INFO', 'Found 47 indexable URLs'],
-    [18, 'OK',   'Crawl complete · 47 pages analyzed'],
-    [22, 'INFO', 'Querying ChatGPT, Perplexity, Gemini…'],
-    [30, 'INFO', 'Scoring answerability · trust · freshness…'],
-    [45, 'INFO', 'Compiling AEO report…'],
+  const rows: [number, 'INFO' | 'OK' | 'WARN', string][] = [
+    [0.5,  'INFO', `Audit request received for ${domain}`],
+    [1.5,  'INFO', 'Validating domain & DNS records…'],
+    [3.0,  'OK',   'Domain verified · queued for processing'],
+    [4.5,  'INFO', 'Spawning crawler · respecting robots.txt'],
+    [6.0,  'INFO', 'GET / 200 OK · homepage loaded'],
+    [8.0,  'INFO', 'Parsing internal links · building sitemap'],
+    [10.0, 'INFO', 'Discovered 47 internal URLs'],
+    [12.0, 'INFO', 'Crawling page 2 of ~50…'],
+    [15.0, 'INFO', 'Crawling page 8 of ~50…'],
+    [18.0, 'INFO', 'Analyzing structured data (JSON-LD, OpenGraph)'],
+    [21.0, 'WARN', 'No Organization schema detected on homepage'],
+    [24.0, 'OK',   'Site crawl complete · 47 pages analyzed'],
+    [26.0, 'INFO', 'Probing ChatGPT (GPT-4o) with industry prompts…'],
+    [29.0, 'INFO', 'Probing Perplexity (sonar-large)…'],
+    [32.0, 'INFO', 'Probing Google AI Overviews…'],
+    [35.0, 'INFO', 'Probing Claude (Sonnet 4.6)…'],
+    [38.0, 'OK',   '48 AI responses collected across 4 engines'],
+    [40.0, 'INFO', 'Scoring citation density & brand visibility…'],
+    [43.0, 'INFO', 'Cross-referencing competitor mentions…'],
+    [46.0, 'INFO', 'Calculating dimension breakdowns…'],
+    [49.0, 'OK',   'Visibility score calculated'],
+    [52.0, 'INFO', 'Translating findings to plain English…'],
+    [55.0, 'INFO', 'Generating prioritized recommendations…'],
   ];
 
   const entries = rows
@@ -47,7 +62,7 @@ function buildLog(domain: string, elapsed: number, startTime: Date, completed: b
     .map(([offset, level, msg]) => ({ time: ts(offset), level, msg }));
 
   if (completed) {
-    entries.push({ time: ts(Math.floor(elapsed)), level: 'OK', msg: 'Audit complete · loading results…' });
+    entries.push({ time: ts(Math.floor(elapsed)), level: 'OK', msg: 'Report ready · redirecting…' });
   }
 
   return entries;
@@ -183,10 +198,10 @@ export default function AuditProgress({ domain, auditId }: Props) {
     return () => clearTimeout(t);
   }, [completed]);
 
-  // Ease-out progress: fast start, decelerates, caps at 90% until complete
+  // Ease-out progress over 60s, caps at 85% until completion, then snaps to 100%
   const t        = Math.min(1, elapsed / 60);
   const eased    = t * (2 - t); // quadratic ease-out
-  const progress = completed ? 100 : Math.min(90, 90 * eased);
+  const progress = completed ? 100 : Math.min(85, 85 * eased);
   const elapsedS = Math.floor(elapsed);
   const log      = buildLog(domain, elapsed, startTime.current, completed);
   const letter   = domain.charAt(0).toUpperCase();
@@ -268,7 +283,7 @@ export default function AuditProgress({ domain, auditId }: Props) {
           {log.map((entry, i) => (
             <div key={i} className={styles.logLine}>
               <span className={styles.logTime}>[{entry.time}]</span>
-              <span className={`${styles.logLevel} ${entry.level === 'OK' ? styles.logLevelOk : styles.logLevelInfo}`}>
+              <span className={`${styles.logLevel} ${entry.level === 'OK' ? styles.logLevelOk : entry.level === 'WARN' ? styles.logLevelWarn : styles.logLevelInfo}`}>
                 {entry.level}
               </span>
               <span className={styles.logMsg}>{entry.msg}</span>
