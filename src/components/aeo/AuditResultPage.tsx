@@ -966,7 +966,14 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
             Our AEO specialists will implement these recommendations and get your brand cited by AI engines within 90 days.
           </p>
           <div className={styles.ctaBtnRow}>
-            <a href="#" className={styles.ctaBtnPrimary}>Book a strategy call →</a>
+            <a
+              href="https://www.campaigncreators.com/schedule-your-solutions-call-campaign-creators-hubspot-elite-partner"
+              target="_blank"
+              rel="noopener noreferrer"
+              className={styles.ctaBtnPrimary}
+            >
+              Book a strategy call →
+            </a>
             <a
               href="https://www.campaigncreators.com/aeo"
               target="_blank"
