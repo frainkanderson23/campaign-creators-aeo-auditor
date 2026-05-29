@@ -30,18 +30,19 @@ const PIPELINE_STAGES = [
 ] as const;
 
 const AI_ENGINES = [
-  { bg: '#10A37F', label: 'GPT', name: 'ChatGPT', meta: 'OpenAI · 800M+ users' },
-  { bg: '#20808D', label: 'P', name: 'Perplexity', meta: 'Answer engine' },
-  { bg: 'linear-gradient(135deg,#4285F4,#34A853)', label: 'G', name: 'Google AI Overviews', meta: 'Search Generative' },
-  { bg: '#D97757', label: 'C', name: 'Claude', meta: 'Anthropic' },
+  { bg: '#10A37F', label: 'GPT', name: 'ChatGPT (GPT-4o)', desc: 'The most popular AI assistant. If your customers ask ChatGPT for recommendations, will they hear about you?' },
+  { bg: '#20808D', label: 'P', name: 'Perplexity', desc: 'The AI-native search engine. Perplexity answers questions with source citations — is your site one of them?' },
+  { bg: '#4285F4', label: 'G', name: 'Google AI Overviews', desc: "Google's AI summaries appear above traditional search results. Missing here means missing where it matters most." },
+  { bg: '#D97757', label: 'C', name: 'Claude', desc: "Anthropic's AI assistant is increasingly used for research and business decisions. Are you part of the conversation?" },
 ] as const;
 
-const LEARN_ITEMS = [
-  { n: '01', h: 'Where do we stand right now?', p: 'A single 0–100 AEO Visibility Score, benchmarked against your industry.' },
-  { n: '02', h: 'What are competitors getting cited for?', p: "See the prompts where rival brands appear — and you don't." },
-  { n: '03', h: 'Why are AI engines ignoring us?', p: 'Plain explanations of the structural reasons (and the easy fixes).' },
-  { n: '04', h: "What's the dollar cost of doing nothing?", p: 'An estimate of pipeline at risk, based on your industry and traffic.' },
-  { n: '05', h: 'What do we fix first?', p: 'A prioritized 30/60/90 day plan — High/Medium/Low effort tagged.' },
+const REPORT_FEATURES = [
+  { title: 'AEO Visibility Score', desc: 'A single score from 0–100 measuring how visible your brand is to AI-powered search engines.' },
+  { title: 'Dimension Breakdown', desc: 'Detailed analysis across 6 dimensions: crawlability, schema markup, authority, topical depth, freshness, and brand mentions.' },
+  { title: 'AI Engine Comparison', desc: 'See exactly which AI engines cite your brand — and which ones cite your competitors instead.' },
+  { title: 'Actionable Recommendations', desc: 'A prioritized 90-day action plan with specific steps to improve your AI visibility.' },
+  { title: 'Real AI Responses', desc: 'See the actual prompts we sent to each AI engine and whether your brand appeared in their answers.' },
+  { title: 'Competitive Intelligence', desc: 'Discover which competitors are getting cited when AI engines answer questions in your industry.' },
 ] as const;
 
 const PIPELINE_ICONS: Record<string, React.ReactNode> = {
@@ -126,8 +127,7 @@ export default function Home() {
       <section className={styles.sectionTint} id="how">
         <div className={styles.sectionInner}>
           <div className={styles.sectionTitle}>
-            <span className={styles.kicker}>The pipeline</span>
-            <h2>From URL to actionable answers in 90 seconds</h2>
+            <h2>How the AEO Audit works</h2>
             <p>Five automated stages — no installation, no code, no account required.</p>
           </div>
           <div className={styles.pipeline}>
@@ -145,11 +145,10 @@ export default function Home() {
       </section>
 
       {/* ── AI ENGINES ── */}
-      <section className={styles.section} id="engines">
+      <section className={styles.sectionTint} id="engines">
         <div className={styles.sectionInner}>
           <div className={styles.sectionTitle}>
-            <span className={styles.kicker}>Coverage</span>
-            <h2>We test the engines your customers actually use</h2>
+            <h2>We test your visibility across 4 AI engines</h2>
             <p>Real prompts. Real answers. We measure when, where, and how your brand appears.</p>
           </div>
           <div className={styles.engines}>
@@ -162,80 +161,30 @@ export default function Home() {
                 >
                   {e.label}
                 </div>
-                <div>
-                  <span className={styles.engineName}>{e.name}</span>
-                  <span className={styles.engineMeta}>{e.meta}</span>
-                </div>
+                <span className={styles.engineName}>{e.name}</span>
+                <p className={styles.engineDesc}>{e.desc}</p>
               </div>
             ))}
           </div>
         </div>
       </section>
 
-      {/* ── WHAT YOU'LL LEARN ── */}
-      <section className={styles.sectionCream} id="sample">
+      {/* ── SAMPLE REPORT ── */}
+      <section className={styles.section} id="sample">
         <div className={styles.sectionInner}>
           <div className={styles.sectionTitle}>
-            <span className={styles.kicker}>Your report</span>
-            <h2>The questions every executive needs answered</h2>
+            <h2>What you&apos;ll get</h2>
             <p>
-              No technical jargon. No SEO acronyms. Just the numbers that matter
-              and what to do next.
+              A complete picture of your AI search visibility — and exactly what to do about it.
             </p>
           </div>
-          <div className={styles.learnGrid}>
-            <ul className={styles.learnList}>
-              {LEARN_ITEMS.map((item) => (
-                <li key={item.n} className={styles.learnItem}>
-                  <div className={styles.learnItemNum}>{item.n}</div>
-                  <div>
-                    <h4 className={styles.learnItemHead}>{item.h}</h4>
-                    <p className={styles.learnItemText}>{item.p}</p>
-                  </div>
-                </li>
-              ))}
-            </ul>
-
-            {/* Report preview card */}
-            <div className={styles.reportPreview}>
-              <div className={styles.reportPreviewHead}>
-                <div>
-                  <div className={styles.reportLabel}>AEO Visibility Report</div>
-                  <div className={styles.reportDomain}>yourcompany.com</div>
-                </div>
-                <div className={styles.reportBadge}>NEEDS WORK</div>
+          <div className={styles.featureGrid}>
+            {REPORT_FEATURES.map((f) => (
+              <div className={styles.featureCard} key={f.title}>
+                <h4 className={styles.featureTitle}>{f.title}</h4>
+                <p className={styles.featureDesc}>{f.desc}</p>
               </div>
-              <div className={styles.reportScore}>
-                <div className={styles.reportScoreNum}>
-                  42<span className={styles.reportScoreTotal}>/100</span>
-                </div>
-                <p className={styles.reportScoreSub}>
-                  Your brand appears in <strong>2 of 12</strong> tested AI
-                  answers.
-                  <br />
-                  Industry average: <strong>57</strong>.
-                </p>
-              </div>
-              <div className={styles.reportBars}>
-                {[
-                  { label: 'Crawlability', val: 78, cls: 'good' },
-                  { label: 'Schema markup', val: 35, cls: 'bad' },
-                  { label: 'Citation worthiness', val: 52, cls: 'warn' },
-                  { label: 'Brand mentions', val: 28, cls: 'bad' },
-                ].map((d) => (
-                  <div key={d.label} className={styles.reportBar}>
-                    <span className={styles.reportBarLabel}>{d.label}</span>
-                    <div className={styles.barTrack}>
-                      <div
-                        className={`${styles.barFill} ${styles['barFill_' + d.cls]}`}
-                        style={{ width: d.val + '%' }}
-                      />
-                    </div>
-                    <span className={styles.barVal}>{d.val}</span>
-                  </div>
-                ))}
-              </div>
-            </div>
+            ))}
           </div>
         </div>
       </section>
