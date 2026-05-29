@@ -202,6 +202,84 @@ export async function probePerplexity(
   };
 }
 
+export async function probeGoogleAI(
+  domain: string,
+  companyName: string,
+  prompts: string[],
+): Promise<ProbeReport> {
+  const apiKey = process.env.SERPAPI_API_KEY;
+  if (!apiKey) return { engine: 'Google AI', results: [], citedCount: 0, totalPrompts: 0, status: 'missing' };
+
+  const results: ProbeResult[] = [];
+  const domainLower = domain.replace(/^https?:\/\//, '').replace(/^www\./, '').toLowerCase();
+  const nameLower = companyName.toLowerCase();
+
+  for (const prompt of prompts) {
+    try {
+      const params = new URLSearchParams({
+        q: prompt,
+        api_key: apiKey,
+        engine: 'google',
+        gl: 'us',
+        hl: 'en',
+      });
+
+      const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
+      const data = await res.json();
+
+      const aiOverview = data.ai_overview;
+      let aiText = '';
+      let cited = false;
+
+      if (aiOverview) {
+        if (aiOverview.text_blocks) {
+          aiText = aiOverview.text_blocks.map((b: { snippet?: string; text?: string }) => b.snippet || b.text || '').join(' ');
+        } else if (aiOverview.snippet) {
+          aiText = aiOverview.snippet;
+        } else if (typeof aiOverview === 'string') {
+          aiText = aiOverview;
+        } else {
+          aiText = JSON.stringify(aiOverview).substring(0, 1000);
+        }
+
+        const lower = aiText.toLowerCase();
+        cited = lower.includes(domainLower) || lower.includes(nameLower);
+
+        if (!cited && aiOverview.sources) {
+          for (const source of aiOverview.sources) {
+            if (source.link?.toLowerCase().includes(domainLower) ||
+                source.title?.toLowerCase().includes(nameLower)) {
+              cited = true;
+              break;
+            }
+          }
+        }
+      } else {
+        aiText = 'No AI Overview appeared for this query';
+      }
+
+      results.push({
+        prompt,
+        response: aiText.substring(0, 500),
+        cited,
+        mentionedDomains: [],
+        snippet: cited ? findSnippet(aiText, [domainLower, nameLower]) : null,
+      });
+    } catch {
+      results.push({ prompt, response: 'Error querying Google', cited: false, mentionedDomains: [], snippet: null });
+    }
+  }
+
+  const citedCount = results.filter(r => r.cited).length;
+  return {
+    engine: 'Google AI',
+    results,
+    citedCount,
+    totalPrompts: results.length,
+    status: citedCount >= 4 ? 'cited' : citedCount >= 1 ? 'partial' : 'missing',
+  };
+}
+
 export async function probeClaudeVisibility(
   domainUrl: string,
   companyName: string,

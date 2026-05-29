@@ -3,7 +3,7 @@ import { createClient } from '@supabase/supabase-js';
 import * as cheerio from 'cheerio';
 import { inngest } from './client';
 import { runScorers } from '@/lib/scoring';
-import { probeWithPrompts, probeOpenAI, probePerplexity } from '@/lib/auditor/ai-probe';
+import { probeWithPrompts, probeOpenAI, probePerplexity, probeGoogleAI } from '@/lib/auditor/ai-probe';
 import type { CrawlPage, CrawlRobotsData } from '@/types/audit';
 
 const MAX_PAGES = 200;
@@ -387,18 +387,20 @@ export const runAudit = inngest.createFunction(
     const aiProbeResult = await step.run('ai-probe', async () => {
       const { crawledPages } = crawlResult;
       const { companyName, prompts } = await generateSmartPrompts(crawledPages, new URL(domainUrl).hostname);
-      const [claudeResult, openaiResult, perplexityResult] = await Promise.all([
+      const [claudeResult, openaiResult, perplexityResult, googleResult] = await Promise.all([
         probeWithPrompts(domainUrl, companyName, prompts).catch((err) => {
           console.error('Claude probe failed:', err);
           return null;
         }),
         probeOpenAI(domainUrl, companyName, prompts),
         probePerplexity(domainUrl, companyName, prompts),
+        probeGoogleAI(domainUrl, companyName, prompts),
       ]);
       return {
         claude: claudeResult,
         openai: openaiResult,
         perplexity: perplexityResult,
+        google: googleResult,
         prompts,
       };
     });

@@ -23,6 +23,7 @@ interface MultiEngineProbe {
   claude: AiProbe | null;
   openai: AiProbe | null;
   perplexity: AiProbe | null;
+  google?: AiProbe | null;
   prompts: string[];
 }
 
@@ -281,6 +282,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     : null;
   const openaiProbe: AiProbe | null = rawProbe && isMultiEngineProbe(rawProbe) ? rawProbe.openai : null;
   const perplexityProbe: AiProbe | null = rawProbe && isMultiEngineProbe(rawProbe) ? rawProbe.perplexity : null;
+  const googleProbe: AiProbe | null = rawProbe && isMultiEngineProbe(rawProbe) ? rawProbe.google ?? null : null;
 
   const probeStatus = (probe: AiProbe | null): string => {
     if (!probe) return 'PENDING';
@@ -294,7 +296,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   const engines = [
     { name: 'ChatGPT', bg: '#10A37F', icon: '✦', probe: openaiProbe },
     { name: 'Perplexity', bg: '#20808D', icon: '◎', probe: perplexityProbe },
-    { name: 'Google AI', bg: 'linear-gradient(135deg,#4285F4,#34A853)', icon: '◈', probe: null as AiProbe | null },
+    { name: 'Google AI', bg: 'linear-gradient(135deg,#4285F4,#34A853)', icon: '◈', probe: googleProbe },
     { name: 'Claude', bg: '#D97757', icon: '◆', probe: claudeProbe },
   ];
 
@@ -302,6 +304,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     { key: 'claude', name: 'Claude', color: '#D97757', probe: claudeProbe },
     { key: 'openai', name: 'ChatGPT', color: '#10A37F', probe: openaiProbe },
     { key: 'perplexity', name: 'Perplexity', color: '#20808D', probe: perplexityProbe },
+    { key: 'googleai', name: 'Google AI', color: '#4285F4', probe: googleProbe },
   ].filter((e): e is { key: string; name: string; color: string; probe: AiProbe } =>
     e.probe !== null && e.probe.results.length > 0
   );
@@ -310,7 +313,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     { key: 'claude', name: 'Claude', color: '#D97757', probe: claudeProbe },
     { key: 'openai', name: 'ChatGPT', color: '#10A37F', probe: openaiProbe },
     { key: 'perplexity', name: 'Perplexity', color: '#20808D', probe: perplexityProbe },
-    { key: 'googleai', name: 'Google AI', color: '#4285F4', probe: null as AiProbe | null },
+    { key: 'googleai', name: 'Google AI', color: '#4285F4', probe: googleProbe },
   ];
 
   const recs = [
