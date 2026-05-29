@@ -1,4 +1,4 @@
-/* AuditProgress.module.css — camelCase, design tokens via var(--*) */
+/* AuditProgress.module.css — CC Web UI Kit v2.0 */
 
 .wrapper {
   max-width: 760px;
@@ -73,16 +73,17 @@
   align-items: center;
   gap: 16px;
   padding: 20px;
-  background: var(--tint-1);
-  border-radius: var(--radius-lg);
+  background: white;
+  border-radius: var(--radius-card);
   border: 1px solid var(--line);
+  box-shadow: var(--shadow-card);
 }
 
 .faviconCircle {
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
+  background: var(--color-navy);
   color: #fff;
   font-size: 18px;
   font-weight: 600;
@@ -124,8 +125,8 @@
   display: inline-flex;
   align-items: center;
   border-radius: var(--radius-sm);
-  background: var(--accent);
-  color: var(--primary);
+  background: var(--color-accent);
+  color: var(--color-navy);
   font-size: 11px;
   font-weight: 700;
   letter-spacing: 0.06em;
@@ -157,12 +158,12 @@
   width: 24px;
   height: 2px;
   background: var(--line);
-  margin-top: 22px; /* center with 44px icon circle */
+  margin-top: 22px;
   transition: background 300ms ease;
 }
 
 .pipeConnectorDone {
-  background: var(--good);
+  background: var(--color-accent);
 }
 
 .pipeIconWrap {
@@ -179,7 +180,7 @@
   position: absolute;
   inset: -7px;
   border-radius: var(--radius-full);
-  border: 2px solid var(--primary);
+  border: 2px solid var(--color-navy);
   opacity: 0.5;
   animation: pulse 1.4s ease-in-out infinite;
 }
@@ -193,7 +194,7 @@
   width: 44px;
   height: 44px;
   border-radius: var(--radius-full);
-  border: 1px solid var(--line);
+  border: 1px solid var(--color-navy);
   background: var(--bg);
   color: var(--ink-3);
   display: flex;
@@ -208,15 +209,15 @@
 }
 
 .pipeStage[data-state="active"] .pipeIcon {
-  background: var(--primary);
-  border-color: var(--primary);
-  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-navy);
 }
 
 .pipeStage[data-state="done"] .pipeIcon {
-  background: var(--good);
-  border-color: var(--good);
-  color: #fff;
+  background: var(--color-accent);
+  border-color: var(--color-accent);
+  color: var(--color-navy);
 }
 
 .pipeLabel {
@@ -228,11 +229,11 @@
 }
 
 .pipeStage[data-state="active"] .pipeLabel {
-  color: var(--primary);
+  color: var(--color-navy);
 }
 
 .pipeStage[data-state="done"] .pipeLabel {
-  color: var(--good);
+  color: var(--color-navy);
 }
 
 .pipeSub {
@@ -259,7 +260,7 @@
 
 .progressFill {
   height: 100%;
-  background: linear-gradient(90deg, var(--primary) 0%, var(--secondary) 100%);
+  background: linear-gradient(90deg, var(--color-accent) 0%, var(--color-navy) 100%);
   border-radius: var(--radius-full);
   transition: width 600ms ease;
   min-width: 4px;
@@ -275,8 +276,8 @@
 /* ── Live log ────────────────────────────────────────────── */
 
 .auditLog {
-  background: #0B1220;
-  border-radius: var(--radius-lg);
+  background: var(--color-dark-navy);
+  border-radius: var(--radius-card);
   overflow: hidden;
   border: 1px solid rgba(255, 255, 255, 0.06);
 }
@@ -327,11 +328,11 @@
 }
 
 .logLevelInfo {
-  color: rgba(255, 255, 255, 0.38);
+  color: rgba(255, 255, 255, 0.5);
 }
 
 .logLevelOk {
-  color: #4ade80;
+  color: var(--color-accent);
 }
 
 .logMsg {
@@ -342,7 +343,7 @@
   display: inline-block;
   width: 8px;
   height: 14px;
-  background: #4ade80;
+  background: var(--color-accent);
   border-radius: 1px;
   margin-top: 4px;
   animation: blink 1s step-end infinite;
@@ -406,7 +407,6 @@
   .pipeline {
     overflow-x: auto;
     padding-bottom: 4px;
-    /* enough room so each stage has at least 80px */
     min-width: max-content;
   }
 

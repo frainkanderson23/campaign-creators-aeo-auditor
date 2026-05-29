@@ -1,4 +1,4 @@
-/* Inline pill audit form — mirrors design/handoff/styles.css .audit-form */
+/* Inline pill audit form — CC Web UI Kit v2.0 */
 
 .wrap {
   width: 100%;
@@ -11,16 +11,16 @@
   align-items: center;
   gap: 10px;
   background: white;
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-lg);
+  border: 1px solid var(--color-n400);
+  border-radius: var(--radius-card);
   padding: 8px;
-  box-shadow: var(--shadow-3);
+  box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.08), var(--shadow-3);
   transition: all 0.2s ease;
 }
 
 .form:focus-within {
-  border-color: var(--primary);
-  box-shadow: 0 0 0 4px rgba(255, 107, 53, 0.12), var(--shadow-3);
+  border-color: #40C9D4;
+  box-shadow: 0 0 0 3px rgba(64, 201, 212, 0.2), var(--shadow-3);
 }
 
 .formInvalid {
@@ -55,23 +55,23 @@
 .submit {
   height: 48px;
   padding: 0 22px;
-  border-radius: var(--radius-md);
-  background: var(--primary);
-  color: white;
+  border-radius: var(--radius-btn);
+  background: var(--color-accent);
+  color: var(--color-navy);
   border: none;
   font-family: var(--font-sans);
   font-weight: 600;
-  font-size: 14px;
+  font-size: 15px;
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
   white-space: nowrap;
   cursor: pointer;
   flex-shrink: 0;
 }
 
-.submit:hover { background: var(--primary-700); }
+.submit:hover { background: #2de8c2; }
 .submit:disabled { opacity: 0.55; cursor: not-allowed; }
 
 .errorMsg {

@@ -10,11 +10,13 @@ export function Footer() {
           {/* Brand column */}
           <div className={styles.brandCol}>
             <div className={styles.logo}>
-              <span className={styles.logoMark} aria-hidden="true" />
-              <span className={styles.logoText}>
-                <strong className={styles.logoName}>AEO Auditor</strong>
-                <small className={styles.logoSub}>by Campaign Creators</small>
-              </span>
+              {/* eslint-disable-next-line @next/next/no-img-element */}
+              <img
+                src="https://www.campaigncreators.com/hubfs/cc-logo-color-horizontal%20(1).png"
+                alt="Campaign Creators"
+                height={32}
+                className={styles.logoImg}
+              />
             </div>
             <p className={styles.tagline}>
               Discover how visible your business is in ChatGPT, Perplexity,
