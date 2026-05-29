@@ -255,6 +255,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   const rafRef = useRef<number | null>(null);
 
   const [unlocked, setUnlocked] = useState(false);
+  const gatedSectionRef = useRef<HTMLDivElement>(null);
   const [gateName, setGateName] = useState('');
   const [gateEmail, setGateEmail] = useState('');
   const [gateSubmitting, setGateSubmitting] = useState(false);
@@ -385,7 +386,6 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
       }
     }
   }
-  const aiCitationScore = totalAiPrompts > 0 ? (totalAiCited / totalAiPrompts) * 100 : 0;
   const hasAiData = totalAiPrompts > 0;
 
   const probeStatus = (probe: AiProbe | null): string => {
@@ -468,17 +468,17 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
         <div className={styles.scoreHero}>
           <div className={styles.scoreRingWrap}>
             <div className={styles.scoreRing}>
-              <svg width="260" height="260" viewBox="0 0 260 260">
+              <svg width="170" height="170" viewBox="0 0 260 260">
                 <defs>
                   <linearGradient id="scoreGrad" x1="0%" y1="0%" x2="100%" y2="100%">
                     <stop offset="0%" stopColor="#F59E0B" />
                     <stop offset="100%" stopColor="#EF4444" />
                   </linearGradient>
                 </defs>
-                <circle cx="130" cy="130" r="110" fill="none" stroke="#F3F4F6" strokeWidth="16" />
+                <circle cx="130" cy="130" r="110" fill="none" stroke="rgba(255,255,255,0.08)" strokeWidth="18" />
                 <circle
                   cx="130" cy="130" r="110" fill="none"
-                  stroke="url(#scoreGrad)" strokeWidth="16" strokeLinecap="round"
+                  stroke="url(#scoreGrad)" strokeWidth="18" strokeLinecap="round"
                   strokeDasharray={circumference} strokeDashoffset={dashoffset}
                   style={{ transform: 'rotate(-90deg)', transformOrigin: 'center' }}
                 />
@@ -491,46 +491,80 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
             <div className={`${styles.scoreGrade} ${resolveGradeClass(auditData.overall_grade)}`}>
               {resolveGradeLabel(auditData.overall_grade)}
             </div>
+            <button
+              className={styles.heroCtaBtn}
+              onClick={() => gatedSectionRef.current?.scrollIntoView({ behavior: 'smooth' })}
+            >
+              {unlocked ? 'View full report ↓' : 'Unlock your full report →'}
+            </button>
+            <a
+              className={styles.heroCtaLink}
+              href="https://www.campaigncreators.com/aeo"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              See our AEO services
+            </a>
           </div>
 
           <div className={styles.scoreSummary}>
-            <div className={styles.scoreSubtitle}>Your AEO Visibility Score</div>
+            <div className={styles.heroEyebrow}>What your score means</div>
             {target >= 90 ? (
-              <h2>Excellent AI visibility. Your brand is well-represented across AI search engines.</h2>
+              <h2>Your brand leads in AI search. Here&apos;s how to stay ahead.</h2>
             ) : target >= 70 ? (
-              <h2>Your brand has strong AI visibility with room for improvement.</h2>
+              <h2>Your brand has solid AI visibility. Here&apos;s where to push further.</h2>
             ) : target >= 50 ? (
-              <h2>Your brand has limited AI visibility. You&apos;re being cited in some queries but competitors are getting more mentions.</h2>
+              <h2>Your brand has limited AI visibility. Here&apos;s what you&apos;re leaving on the table.</h2>
             ) : (
-              <h2>
-                {hasAiData
-                  ? `Your brand is nearly invisible to AI-powered search. AI engines cited you in only ${totalAiCited} of ${totalAiPrompts} prompts tested.`
-                  : "Your brand is being skipped by AI engines answering your customers’ questions"}
-              </h2>
+              <h2>Your brand is invisible to AI search. Here&apos;s what that&apos;s costing you.</h2>
             )}
             <p>
-              With a score of <strong>{auditData.overall_score}/100</strong>,{' '}
               {target >= 70
-                ? `${domain} is well-positioned in AI search but can improve citation rates further.`
+                ? 'Your brand is well-positioned in AI search. Strengthening citation rates across all engines will compound your advantage.'
                 : target >= 50
-                ? `${domain} is gaining AI visibility but missing from many relevant queries.`
-                : `${domain} is nearly invisible to AI-powered search. When potential customers ask ChatGPT, Perplexity, or Google AI about solutions in your space, your brand isn’t being cited — your competitors are.`}
-            </p>
-            <div className={styles.scoreCallout}>
-              <strong>⚠ Estimated impact:</strong>{' '}
-              {hasAiData && aiCitationScore < 25
-                ? 'Critical: Your brand appeared in less than 25% of AI responses. Competitors are capturing this traffic.'
-                : hasAiData && aiCitationScore <= 50
-                ? 'Your brand is partially visible but missing from most AI recommendations.'
+                ? "Your brand appears in some AI answers, but inconsistently. Competitors with stronger signals are capturing the majority of AI-referred traffic."
                 : hasAiData
-                ? "Good AI presence, but there’s still room to improve citation rates."
-                : 'Brands with sub-50 AEO scores lose an estimated 23–41% of AI-referred traffic to competitors who have optimized for answer engine discovery.'}
+                ? `62% of B2B buyers now start research in AI tools. With a score of ${auditData.overall_score}, your competitors are being recommended while your brand is being skipped entirely.`
+                : `62% of B2B buyers now start research in AI tools. With a score of ${auditData.overall_score}, your site's technical signals suggest AI engines are overlooking your brand.`}
+            </p>
+
+            <div className={styles.impactGrid}>
+              <div className={styles.impactCard}>
+                <span className={styles.impactNum}>
+                  {hasAiData ? `${totalAiCited}/${totalAiPrompts}` : '—'}
+                </span>
+                <span className={styles.impactLabel}>
+                  {hasAiData ? 'AI prompts cited your brand' : 'AI citation data pending'}
+                </span>
+              </div>
+              <div className={styles.impactCard}>
+                <span className={styles.impactNumBad}>−61%</span>
+                <span className={styles.impactLabel}>organic CTR when AI answers appear</span>
+              </div>
+              <div className={styles.impactCard}>
+                <span className={styles.impactNumWarn}>73%</span>
+                <span className={styles.impactLabel}>of B2B sites lost traffic to AI search in 2025</span>
+              </div>
+              <div className={styles.impactCard}>
+                <span className={styles.impactNum}>4.4×</span>
+                <span className={styles.impactLabel}>higher conversion from AI-referred visitors</span>
+              </div>
+            </div>
+
+            <div className={styles.heroDivider} />
+
+            <div className={styles.heroSources}>
+              <span className={styles.heroSourceStat}><strong>48%</strong> of Google queries now show AI Overviews</span>
+              <span className={styles.heroSourceDot}>·</span>
+              <span className={styles.heroSourceStat}><strong>82%</strong> of B2B tech queries trigger AI summaries</span>
+              <span className={styles.heroSourceDot}>·</span>
+              <span className={styles.heroSourceStat}>Source: BrightEdge, Seer Interactive, Semrush 2025–2026</span>
             </div>
           </div>
         </div>
 
         {/* Gated section — everything below the score hero */}
-        <div className={styles.gatedSection}>
+        <div className={styles.gatedSection} ref={gatedSectionRef}>
           {!unlocked && (
             <>
               <div className={styles.frostedOverlay} />
