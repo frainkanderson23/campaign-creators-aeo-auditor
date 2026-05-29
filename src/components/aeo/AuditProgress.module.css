@@ -7,6 +7,28 @@
   display: flex;
   flex-direction: column;
   gap: 32px;
+  position: relative;
+  isolation: isolate;
+}
+
+/* ── Particle network background ─────────────────────────── */
+
+.wrapper::before {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: -1;
+  opacity: 0.13;
+  background-image: url("data:image/svg+xml,%3Csvg xmlns='http://www.w3.org/2000/svg' width='300' height='300'%3E%3Ccircle cx='30' cy='45' r='2' fill='%2335FFD8'/%3E%3Ccircle cx='120' cy='20' r='1.5' fill='%2335FFD8'/%3E%3Ccircle cx='220' cy='75' r='2' fill='%2335FFD8'/%3E%3Ccircle cx='50' cy='150' r='1.5' fill='%2335FFD8'/%3E%3Ccircle cx='180' cy='170' r='2' fill='%2335FFD8'/%3E%3Ccircle cx='260' cy='240' r='1.5' fill='%2335FFD8'/%3E%3Ccircle cx='90' cy='260' r='2' fill='%2335FFD8'/%3E%3Ccircle cx='280' cy='120' r='1.5' fill='%2335FFD8'/%3E%3Ccircle cx='150' cy='110' r='2' fill='%2335FFD8'/%3E%3Ccircle cx='10' cy='210' r='1.5' fill='%2335FFD8'/%3E%3Cline x1='30' y1='45' x2='120' y2='20' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='120' y1='20' x2='220' y2='75' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='220' y1='75' x2='280' y2='120' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='30' y1='45' x2='50' y2='150' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='50' y1='150' x2='180' y2='170' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='180' y1='170' x2='260' y2='240' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='90' y1='260' x2='50' y2='150' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='150' y1='110' x2='220' y2='75' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='150' y1='110' x2='180' y2='170' stroke='%2335FFD8' stroke-width='0.5'/%3E%3Cline x1='10' y1='210' x2='50' y2='150' stroke='%2335FFD8' stroke-width='0.5'/%3E%3C/svg%3E");
+  background-repeat: repeat;
+  background-size: 300px 300px;
+  animation: particleDrift 20s linear infinite;
+}
+
+@keyframes particleDrift {
+  0%   { background-position: 0 0; }
+  100% { background-position: 300px 300px; }
 }
 
 /* ── Header ──────────────────────────────────────────────── */
@@ -77,6 +99,36 @@
   border-radius: var(--radius-card);
   border: 1px solid var(--line);
   box-shadow: var(--shadow-card);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Scan overlay — sweeps top-to-bottom every 3s */
+.scanOverlay {
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  z-index: 2;
+}
+
+.scanOverlay::after {
+  content: '';
+  position: absolute;
+  left: 0;
+  right: 0;
+  height: 40px;
+  background: linear-gradient(
+    to bottom,
+    transparent,
+    rgba(53, 255, 216, 0.15),
+    transparent
+  );
+  animation: scan 3s linear infinite;
+}
+
+@keyframes scan {
+  0%   { top: -40px; }
+  100% { top: 100%; }
 }
 
 .faviconCircle {
@@ -159,11 +211,23 @@
   height: 2px;
   background: var(--line);
   margin-top: 22px;
-  transition: background 300ms ease;
+  position: relative;
+  overflow: hidden;
 }
 
-.pipeConnectorDone {
+/* Fills left-to-right with turquoise when previous stage completes */
+.pipeConnector::after {
+  content: '';
+  position: absolute;
+  inset: 0;
   background: var(--color-accent);
+  transform: scaleX(0);
+  transform-origin: left;
+  transition: transform 400ms ease;
+}
+
+.pipeConnectorDone::after {
+  transform: scaleX(1);
 }
 
 .pipeIconWrap {
@@ -176,18 +240,27 @@
   flex-shrink: 0;
 }
 
+/* Double radar rings — first ring */
 .pulseRing {
   position: absolute;
-  inset: -7px;
+  inset: -8px;
   border-radius: var(--radius-full);
-  border: 2px solid var(--color-navy);
-  opacity: 0.5;
-  animation: pulse 1.4s ease-in-out infinite;
+  border: 2px solid #35FFD8;
+  animation: radar 1.5s ease-out infinite;
 }
 
-@keyframes pulse {
-  0%, 100% { opacity: 0.5; transform: scale(1); }
-  50%       { opacity: 0.1; transform: scale(1.18); }
+/* Second radar ring offset by 0.5s */
+.pulseRing2 {
+  position: absolute;
+  inset: -8px;
+  border-radius: var(--radius-full);
+  border: 2px solid #35FFD8;
+  animation: radar 1.5s ease-out 0.5s infinite;
+}
+
+@keyframes radar {
+  0%   { transform: scale(1);   opacity: 0.6; }
+  100% { transform: scale(1.8); opacity: 0;   }
 }
 
 .pipeIcon {
@@ -201,6 +274,8 @@
   align-items: center;
   justify-content: center;
   transition: background 200ms ease, border-color 200ms ease, color 200ms ease;
+  position: relative;
+  z-index: 1;
 }
 
 .pipeIcon svg {
@@ -214,10 +289,29 @@
   color: var(--color-navy);
 }
 
+/* Flash + glow when stage completes */
 .pipeStage[data-state="done"] .pipeIcon {
   background: var(--color-accent);
   border-color: var(--color-accent);
   color: var(--color-navy);
+  animation: iconFlash 0.5s ease-out forwards;
+}
+
+@keyframes iconFlash {
+  0%   { box-shadow: 0 0 0px rgba(53, 255, 216, 0); }
+  35%  { box-shadow: 0 0 20px rgba(53, 255, 216, 0.8); }
+  100% { box-shadow: 0 0 0px rgba(53, 255, 216, 0); }
+}
+
+/* SVG checkmark stroke draw-in */
+.checkPath {
+  stroke-dasharray: 24;
+  stroke-dashoffset: 24;
+  animation: drawCheck 0.4s ease-out 0.05s forwards;
+}
+
+@keyframes drawCheck {
+  to { stroke-dashoffset: 0; }
 }
 
 .pipeLabel {
@@ -264,6 +358,31 @@
   border-radius: var(--radius-full);
   transition: width 600ms ease;
   min-width: 4px;
+  box-shadow: 0 0 12px rgba(53, 255, 216, 0.5), 0 0 24px rgba(53, 255, 216, 0.25);
+  position: relative;
+  overflow: hidden;
+}
+
+/* Shimmer shine moving left to right */
+.progressFill::after {
+  content: '';
+  position: absolute;
+  top: 0;
+  left: -60%;
+  width: 60%;
+  height: 100%;
+  background: linear-gradient(
+    90deg,
+    transparent,
+    rgba(255, 255, 255, 0.5),
+    transparent
+  );
+  animation: shimmer 2s linear infinite;
+}
+
+@keyframes shimmer {
+  0%   { left: -60%; }
+  100% { left: 110%; }
 }
 
 .progressLabel {
@@ -271,6 +390,47 @@
   font-family: var(--font-mono);
   font-size: 12px;
   color: var(--ink-2);
+}
+
+/* ── Data stream bar ─────────────────────────────────────── */
+
+.dataStream {
+  height: 12px;
+  border-radius: 2px;
+  background: rgba(12, 34, 55, 0.6);
+  overflow: hidden;
+  position: relative;
+}
+
+/* Scrolling colored blocks — pure CSS repeating-gradient pattern */
+.dataStream::before {
+  content: '';
+  position: absolute;
+  top: 4px;
+  left: 0;
+  height: 4px;
+  width: 200%;
+  background: repeating-linear-gradient(
+    90deg,
+    #35FFD8        0px,  #35FFD8        8px,
+    transparent    8px,  transparent   12px,
+    #0E3860       12px,  #0E3860       24px,
+    transparent   24px,  transparent   28px,
+    #35FFD8       28px,  #35FFD8       34px,
+    transparent   34px,  transparent   40px,
+    #0C2237       40px,  #0C2237       52px,
+    transparent   52px,  transparent   56px,
+    #35FFD8       56px,  #35FFD8       60px,
+    transparent   60px,  transparent   68px,
+    #0E3860       68px,  #0E3860       76px,
+    transparent   76px,  transparent   82px
+  );
+  animation: dataScroll 3s linear infinite;
+}
+
+@keyframes dataScroll {
+  0%   { transform: translateX(0); }
+  100% { transform: translateX(-50%); }
 }
 
 /* ── Live log ────────────────────────────────────────────── */
@@ -299,6 +459,21 @@
   display: flex;
   flex-direction: column;
   gap: 3px;
+  position: relative;
+}
+
+/* CRT scanline overlay — very faint horizontal lines */
+.logBody::after {
+  content: '';
+  position: absolute;
+  inset: 0;
+  pointer-events: none;
+  background: repeating-linear-gradient(
+    0deg,
+    transparent,                          transparent                           2px,
+    rgba(53, 255, 216, 0.03)              2px,
+    rgba(53, 255, 216, 0.03)              4px
+  );
 }
 
 .logLine {
@@ -308,12 +483,13 @@
   font-family: var(--font-mono);
   font-size: 12.5px;
   line-height: 1.6;
-  animation: logFadeIn 120ms ease forwards;
+  animation: logFadeIn 350ms ease forwards;
 }
 
 @keyframes logFadeIn {
-  from { opacity: 0; transform: translateY(3px); }
-  to   { opacity: 1; transform: none; }
+  0%   { opacity: 0; transform: translateY(3px); background: rgba(53, 255, 216, 0.08); }
+  40%  { opacity: 1; transform: none;            background: rgba(53, 255, 216, 0.04); }
+  100% { opacity: 1; transform: none;            background: transparent; }
 }
 
 .logTime {
@@ -335,6 +511,10 @@
   color: var(--color-accent);
 }
 
+.logLevelWarn {
+  color: var(--warn);
+}
+
 .logMsg {
   color: rgba(255, 255, 255, 0.72);
 }
@@ -347,6 +527,7 @@
   border-radius: 1px;
   margin-top: 4px;
   animation: blink 1s step-end infinite;
+  box-shadow: 0 0 8px rgba(53, 255, 216, 0.8), 0 0 16px rgba(53, 255, 216, 0.4);
 }
 
 @keyframes blink {
