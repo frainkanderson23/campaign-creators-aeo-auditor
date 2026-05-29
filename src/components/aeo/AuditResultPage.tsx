@@ -27,6 +27,14 @@ interface MultiEngineProbe {
   prompts: string[];
 }
 
+interface CustomProbeData {
+  claude: AiProbe | null;
+  openai: AiProbe | null;
+  perplexity: AiProbe | null;
+  google: AiProbe | null;
+  prompts: string[];
+}
+
 interface RawFindings {
   robots?: {
     gptBotDisallowed?: boolean;
@@ -57,6 +65,7 @@ interface RawFindings {
   lastModified?: string | null;
   schemaMarkup?: unknown[];
   aiProbe?: AiProbe | MultiEngineProbe | null;
+  customProbe?: CustomProbeData | null;
 }
 
 function isMultiEngineProbe(probe: AiProbe | MultiEngineProbe): probe is MultiEngineProbe {
@@ -225,11 +234,24 @@ function getFreshnessFindings(rf: RawFindings): FindingItem[] {
   return findings;
 }
 
+const CUSTOM_PLACEHOLDERS: [string, string, string] = [
+  'e.g. What are the best HubSpot agencies for enterprise companies?',
+  'e.g. Who should I hire for marketing automation?',
+  'e.g. Which CRM consultants are best for mid-size B2B?',
+];
+
 export default function AuditResultPage({ requestData, auditData }: Props) {
   const [animatedScore, setAnimatedScore] = useState(0);
   const [expandedDim, setExpandedDim] = useState<string | null>(null);
   const [copied, setCopied] = useState(false);
   const [activeEngine, setActiveEngine] = useState<string>('claude');
+  const [customInputs, setCustomInputs] = useState<[string, string, string]>(['', '', '']);
+  const [customLoading, setCustomLoading] = useState(false);
+  const [customError, setCustomError] = useState<string | null>(null);
+  const [customResults, setCustomResults] = useState<CustomProbeData | null>(
+    (auditData.raw_findings?.customProbe as CustomProbeData | null | undefined) ?? null,
+  );
+  const [customActiveEngine, setCustomActiveEngine] = useState<string>('claude');
   const rafRef = useRef<number | null>(null);
 
   const domain = requestData.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
@@ -265,6 +287,35 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
 
   const handleDownload = () => {
     window.open(`/audit/${requestData.id}/pdf`, '_blank');
+  };
+
+  const handleCustomSubmit = async () => {
+    const prompts = customInputs.filter(p => p.trim().length > 0);
+    if (prompts.length === 0) return;
+    setCustomLoading(true);
+    setCustomError(null);
+    try {
+      const res = await fetch(`/api/audit/${auditData.id}/custom-prompts`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ prompts }),
+      });
+      const data = await res.json();
+      if (!res.ok) {
+        setCustomError((data as { error?: string }).error ?? 'Failed to run custom prompts');
+        return;
+      }
+      const probe = (data as { customProbe: CustomProbeData }).customProbe;
+      setCustomResults(probe);
+      const firstKey =
+        (['claude', 'openai', 'perplexity'] as const).find(k => probe[k] && probe[k]!.results.length > 0)
+        ?? (probe.google && probe.google.results.length > 0 ? 'googleai' : 'claude');
+      setCustomActiveEngine(firstKey);
+    } catch {
+      setCustomError('Network error. Please try again.');
+    } finally {
+      setCustomLoading(false);
+    }
   };
 
   const dims = [
@@ -616,6 +667,149 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
               No AI probe results available yet.
             </p>
           )}
+        </div>
+
+        {/* Custom Prompts Section */}
+        <div className={styles.customPromptsSection}>
+          <div className={styles.customPromptsAccent} />
+          <h3 className={styles.cardTitle}>Test your own prompts</h3>
+          <p className={styles.customPromptsSubtext}>
+            Think your customers search differently? Add up to 3 custom prompts and we&apos;ll test them across all AI engines.
+          </p>
+
+          {!customResults && (
+            <div>
+              {CUSTOM_PLACEHOLDERS.map((placeholder, i) => (
+                <input
+                  key={i}
+                  className={styles.customPromptInput}
+                  type="text"
+                  value={customInputs[i]}
+                  maxLength={200}
+                  disabled={customLoading}
+                  placeholder={placeholder}
+                  onChange={e => {
+                    const next = [...customInputs] as [string, string, string];
+                    next[i] = e.target.value;
+                    setCustomInputs(next);
+                  }}
+                />
+              ))}
+              {customError && (
+                <p style={{ fontSize: 13, color: 'var(--color-error)', marginBottom: 12, marginTop: 0 }}>
+                  {customError}
+                </p>
+              )}
+              <button
+                className={styles.customPromptSubmit}
+                disabled={customLoading || customInputs.every(s => !s.trim())}
+                onClick={handleCustomSubmit}
+              >
+                {customLoading ? (
+                  <span style={{ display: 'inline-flex', alignItems: 'center', gap: 8 }}>
+                    <span className={styles.customSpinner} />
+                    Running…
+                  </span>
+                ) : 'Run custom prompts →'}
+              </button>
+            </div>
+          )}
+
+          {customResults && (() => {
+            const customTabEngines = [
+              { key: 'claude', name: 'Claude', color: '#D97757', probe: customResults.claude },
+              { key: 'openai', name: 'ChatGPT', color: '#10A37F', probe: customResults.openai },
+              { key: 'perplexity', name: 'Perplexity', color: '#20808D', probe: customResults.perplexity },
+              { key: 'googleai', name: 'Google AI', color: '#4285F4', probe: customResults.google },
+            ].filter((e): e is { key: string; name: string; color: string; probe: AiProbe } =>
+              e.probe !== null && e.probe !== undefined && e.probe.results.length > 0
+            );
+
+            const citedIndices = new Set<number>();
+            customTabEngines.forEach(({ probe }) => {
+              probe.results.forEach((r, i) => { if (r.cited) citedIndices.add(i); });
+            });
+
+            const activeCustomTab = customTabEngines.find(e => e.key === customActiveEngine) ?? customTabEngines[0];
+
+            return (
+              <div className={styles.customPromptResults}>
+                <p style={{ fontSize: 14, color: 'var(--ink-2)', marginBottom: 16, marginTop: 0 }}>
+                  <strong>{citedIndices.size} of {customResults.prompts.length}</strong> custom prompts cited your domain across all engines
+                </p>
+
+                {customTabEngines.length > 0 && (
+                  <>
+                    <div className={styles.engineTabs}>
+                      {customTabEngines.map(eng => (
+                        <button
+                          key={eng.key}
+                          className={`${styles.engineTab} ${customActiveEngine === eng.key ? styles.engineTabActive : ''}`}
+                          style={customActiveEngine === eng.key ? { borderBottomColor: eng.color } : undefined}
+                          onClick={() => setCustomActiveEngine(eng.key)}
+                        >
+                          {eng.name}
+                          <span className={styles.engineTabBadge}>
+                            {eng.probe.citedCount}/{eng.probe.totalPrompts}
+                          </span>
+                        </button>
+                      ))}
+                    </div>
+
+                    {activeCustomTab && (() => {
+                      const probe = activeCustomTab.probe;
+                      return (
+                        <div>
+                          <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16, marginTop: 0 }}>
+                            {probe.citedCount} of {probe.totalPrompts} prompts cited your domain
+                          </p>
+                          <div className={styles.prompts}>
+                            {probe.results.map((item, i) => (
+                              <div
+                                key={i}
+                                className={styles.promptRow}
+                                style={{
+                                  flexDirection: 'column',
+                                  alignItems: 'flex-start',
+                                  gap: 8,
+                                  background: item.cited
+                                    ? 'rgba(53, 255, 216, 0.12)'
+                                    : 'rgba(220, 38, 38, 0.06)',
+                                }}
+                              >
+                                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 16 }}>
+                                  <span className={styles.promptQ}>&ldquo;{item.prompt}&rdquo;</span>
+                                  <span className={`${styles.erBadge} ${item.cited ? styles.erBadgeCited : styles.erBadgeMissing}`}>
+                                    {item.cited ? 'CITED' : 'NOT CITED'}
+                                  </span>
+                                </div>
+                                {item.snippet && (
+                                  <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5 }}>
+                                    {cleanMarkdown(item.snippet)}
+                                  </p>
+                                )}
+                                {!item.cited && item.mentionedDomains.length > 0 && (
+                                  <p style={{ fontSize: 12, color: 'var(--color-text-muted)', margin: 0 }}>
+                                    Mentioned instead: {item.mentionedDomains.slice(0, 3).join(', ')}
+                                  </p>
+                                )}
+                              </div>
+                            ))}
+                          </div>
+                        </div>
+                      );
+                    })()}
+                  </>
+                )}
+
+                {customTabEngines.length === 0 && (
+                  <p style={{ fontSize: 14, color: 'var(--color-text-muted)' }}>
+                    No results available from any engine.
+                  </p>
+                )}
+              </div>
+            );
+          })()}
         </div>
 
         {/* 90-day Action Plan */}
