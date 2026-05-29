@@ -60,12 +60,7 @@ export default async function AuditResultRoute({ params }: PageProps) {
     const domain = (() => {
       try { return new URL(requestData.url).hostname; } catch { return requestData.url; }
     })();
-    return (
-      <>
-        <meta httpEquiv="refresh" content="3" />
-        <AuditProgress domain={domain} auditId={auditId} />
-      </>
-    );
+    return <AuditProgress domain={domain} auditId={auditId} />;
   }
 
   if (requestData.status === 'failed') {
