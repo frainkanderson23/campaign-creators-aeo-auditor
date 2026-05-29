@@ -287,34 +287,77 @@ async function crawlSinglePage(
   };
 }
 
+const GENERIC_INDUSTRY_WORDS = new Set([
+  'home', 'page', 'website', 'site', 'company', 'business', 'team', 'blog', 'news',
+  'contact', 'about', 'services', 'portfolio', 'case', 'studies',
+]);
+
 function extractIndustry(pages: CrawlPage[]): string {
+  const texts: string[] = [];
   for (const page of pages.slice(0, 3)) {
-    if (page.metaDescription) return page.metaDescription;
+    if (page.h1) texts.push(page.h1);
+    if (page.metaDescription) texts.push(page.metaDescription);
     const ogDesc = page.openGraphTags?.['og:description'];
-    if (ogDesc) return ogDesc;
-    if (page.h1) return page.h1;
+    if (ogDesc) texts.push(ogDesc);
   }
-  return '';
+
+  for (const text of texts) {
+    const segments = text.split(/[.!?]+|[,;–—|]+/).map(s => s.trim()).filter(Boolean);
+    for (const seg of segments) {
+      const words = seg.split(/\s+/);
+      const lower = seg.toLowerCase();
+      if (
+        words.length >= 1 && words.length <= 5 &&
+        !lower.match(/^(we |our |the |a |an |for |with |and |or )/i) &&
+        !GENERIC_INDUSTRY_WORDS.has(lower)
+      ) {
+        return seg;
+      }
+    }
+  }
+
+  return texts[0]?.split(/\s+/).slice(0, 4).join(' ') || '';
 }
 
+const GENERIC_H2S = new Set([
+  'about', 'contact', 'related', 'home', 'services', 'blog', 'news', 'team', 'faq',
+  'portfolio', 'clients', 'partners', 'resources', 'get started', 'learn more',
+  'read more', 'view all', 'next steps', 'testimonials', 'reviews', 'pricing',
+  'careers', 'jobs', 'newsletter', 'subscribe',
+]);
+
 function extractTopics(pages: CrawlPage[]): string[] {
-  const topics = new Set<string>();
-  for (const page of pages.slice(0, 5)) {
-    if (page.h2s) {
-      for (const h2 of page.h2s.slice(0, 3)) topics.add(h2);
+  const seen = new Set<string>();
+  const services: string[] = [];
+
+  for (const page of pages.slice(0, 10)) {
+    if (!page.h2s) continue;
+    for (const h2 of page.h2s) {
+      const lower = h2.toLowerCase().trim();
+      if (!GENERIC_H2S.has(lower) && !seen.has(lower) && h2.trim().split(/\s+/).length <= 6) {
+        seen.add(lower);
+        services.push(h2.trim());
+        if (services.length >= 6) return services;
+      }
     }
-    if (page.title) topics.add(page.title);
   }
-  return Array.from(topics).slice(0, 6);
+
+  return services;
 }
 
 function extractCompanyName(pages: CrawlPage[]): string {
   for (const page of pages) {
     const siteName = page.openGraphTags?.['og:site_name'];
-    if (siteName) return siteName;
+    if (siteName) return siteName.trim();
     const ogTitle = page.openGraphTags?.['og:title'];
-    if (ogTitle) return ogTitle;
-    if (page.title) return page.title;
+    if (ogTitle) {
+      const parts = ogTitle.split(/\s*[|–—]\s*/);
+      return (parts.length > 1 ? parts[parts.length - 1] : ogTitle).trim();
+    }
+    if (page.title) {
+      const parts = page.title.split(/\s*[|–—]\s*/);
+      return (parts.length > 1 ? parts[parts.length - 1] : page.title).trim();
+    }
   }
   return '';
 }
