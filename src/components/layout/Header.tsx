@@ -31,14 +31,12 @@ export function Header() {
 
         <div className={styles.ctas}>
           <a
-            className={styles.ctaGhost}
-            href="https://app.campaigncreators.com"
+            className={styles.ctaPrimary}
+            href="https://www.campaigncreators.com/contact"
+            target="_blank"
             rel="noopener noreferrer"
           >
-            Sign in
-          </a>
-          <a className={styles.ctaPrimary} href="#audit-url">
-            Run free audit
+            Let&apos;s Talk
             <svg
               width="16"
               height="16"
