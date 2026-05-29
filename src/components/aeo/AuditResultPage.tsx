@@ -254,6 +254,12 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   const [customActiveEngine, setCustomActiveEngine] = useState<string>('claude');
   const rafRef = useRef<number | null>(null);
 
+  const [unlocked, setUnlocked] = useState(false);
+  const [gateName, setGateName] = useState('');
+  const [gateEmail, setGateEmail] = useState('');
+  const [gateSubmitting, setGateSubmitting] = useState(false);
+  const [gateError, setGateError] = useState('');
+
   const domain = requestData.url.replace(/^https?:\/\//, '').replace(/\/$/, '');
   const auditDate = new Date(auditData.created_at).toLocaleDateString('en-US', {
     month: 'long', day: 'numeric', year: 'numeric',
@@ -274,6 +280,37 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     rafRef.current = requestAnimationFrame(animate);
     return () => { if (rafRef.current) cancelAnimationFrame(rafRef.current); };
   }, [target]);
+
+  useEffect(() => {
+    if (localStorage.getItem(`aeo-unlocked-${requestData.id}`) === 'true') {
+      setUnlocked(true);
+    }
+  }, [requestData.id]);
+
+  const handleUnlock = async () => {
+    if (!gateName.trim()) { setGateError('Please enter your full name'); return; }
+    const emailOk = /^[^\s@]+@[^\s@]+\.[^\s@]+$/.test(gateEmail.trim());
+    if (!emailOk) { setGateError('Please enter a valid work email'); return; }
+    setGateSubmitting(true);
+    setGateError('');
+    try {
+      const res = await fetch(`/api/audit/${requestData.id}/unlock`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name: gateName.trim(), email: gateEmail.trim() }),
+      });
+      if (res.ok) {
+        localStorage.setItem(`aeo-unlocked-${requestData.id}`, 'true');
+        setUnlocked(true);
+      } else {
+        const data = await res.json() as { error?: string };
+        setGateError(data.error ?? 'Something went wrong');
+      }
+    } catch {
+      setGateError('Network error — please try again');
+    }
+    setGateSubmitting(false);
+  };
 
   const dashoffset = circumference - (animatedScore / 100) * circumference;
 
@@ -491,6 +528,55 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
             </div>
           </div>
         </div>
+
+        {/* Gated section — everything below the score hero */}
+        <div className={styles.gatedSection}>
+          {!unlocked && (
+            <>
+              <div className={styles.frostedOverlay} />
+              <div className={styles.gateModal}>
+                {/* eslint-disable-next-line @next/next/no-img-element */}
+                <img
+                  src="https://www.campaigncreators.com/hubfs/cc-logo-color-horizontal%20(1).png"
+                  alt="Campaign Creators"
+                  height={28}
+                  className={styles.gateModalLogo}
+                />
+                <h3>Unlock Your Full AEO Report</h3>
+                <p>Enter your details to access your complete AI visibility analysis, dimension breakdowns, and 90-day action plan.</p>
+                <input
+                  className={styles.gateInput}
+                  type="text"
+                  placeholder="Full Name"
+                  value={gateName}
+                  required
+                  disabled={gateSubmitting}
+                  onChange={e => setGateName(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleUnlock()}
+                />
+                <input
+                  className={styles.gateInput}
+                  type="email"
+                  placeholder="Work Email"
+                  value={gateEmail}
+                  required
+                  disabled={gateSubmitting}
+                  onChange={e => setGateEmail(e.target.value)}
+                  onKeyDown={e => e.key === 'Enter' && handleUnlock()}
+                />
+                {gateError && <p className={styles.gateError} role="alert">{gateError}</p>}
+                <button
+                  className={styles.gateSubmit}
+                  disabled={gateSubmitting}
+                  onClick={handleUnlock}
+                >
+                  {gateSubmitting ? 'Unlocking…' : 'Unlock My Report →'}
+                </button>
+                <p className={styles.gatePrivacy}>We respect your privacy. No spam, ever.</p>
+              </div>
+            </>
+          )}
+          <div className={unlocked ? '' : styles.blurred}>
 
         {/* Report Grid */}
         <div className={styles.reportGrid}>
@@ -845,6 +931,9 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
             <button className={styles.ctaBtnSecondary}>View pricing</button>
           </div>
         </div>
+
+          </div>{/* end blurred wrapper */}
+        </div>{/* end gatedSection */}
 
       </div>
     </div>

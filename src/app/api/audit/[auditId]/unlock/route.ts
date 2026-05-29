@@ -14,6 +14,7 @@ function getSupabase(): SupabaseClient {
     client = createClient(
       process.env.NEXT_PUBLIC_SUPABASE_URL!.trim(),
       process.env.SUPABASE_SERVICE_ROLE_KEY!.trim(),
+      { auth: { autoRefreshToken: false, persistSession: false } },
     );
   }
   return client;
@@ -23,6 +24,7 @@ const UUID_REGEX =
   /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i;
 
 const unlockSchema = z.object({
+  name: z.string().trim().min(1, 'Name is required').max(100),
   email: z
     .string()
     .trim()
@@ -55,11 +57,6 @@ interface AuditResultRow {
   raw_findings: RawFindings | null;
 }
 
-function isUniqueViolation(error: unknown): boolean {
-  if (typeof error !== 'object' || error === null) return false;
-  return (error as { code?: string }).code === '23505';
-}
-
 export async function POST(
   request: NextRequest,
   ctx: { params: Promise<{ auditId: string }> },
@@ -85,7 +82,7 @@ export async function POST(
     const messages = parsed.error.issues.map((i) => i.message).join('; ');
     return NextResponse.json({ error: messages }, { status: 400 });
   }
-  const { email } = parsed.data;
+  const { name, email } = parsed.data;
 
   try {
     const supabase = getSupabase();
@@ -112,15 +109,12 @@ export async function POST(
 
     const { error: leadError } = await supabase
       .from('leads')
-      .insert({ audit_request_id: auditId, email });
+      .upsert(
+        { audit_request_id: auditId, name, email },
+        { onConflict: 'email,audit_request_id' },
+      );
 
     if (leadError) {
-      if (isUniqueViolation(leadError)) {
-        return NextResponse.json(
-          { error: 'Email already used for this audit' },
-          { status: 409 },
-        );
-      }
       return NextResponse.json(
         { error: 'Internal server error' },
         { status: 500 },
