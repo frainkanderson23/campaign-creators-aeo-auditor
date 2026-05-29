@@ -44,6 +44,34 @@ const LEARN_ITEMS = [
   { n: '05', h: 'What do we fix first?', p: 'A prioritized 30/60/90 day plan — High/Medium/Low effort tagged.' },
 ] as const;
 
+const PIPELINE_ICONS: Record<string, JSX.Element> = {
+  '01': (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="12" cy="12" r="10"/><path d="M2 12h20"/><path d="M12 2a15.3 15.3 0 0 1 4 10 15.3 15.3 0 0 1-4 10 15.3 15.3 0 0 1-4-10 15.3 15.3 0 0 1 4-10z"/>
+    </svg>
+  ),
+  '02': (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <circle cx="11" cy="11" r="8"/><path d="m21 21-4.3-4.3"/>
+    </svg>
+  ),
+  '03': (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M12 2l2.4 7.4H22l-6.2 4.5 2.4 7.4L12 16.8l-6.2 4.5 2.4-7.4L2 9.4h7.6z"/>
+    </svg>
+  ),
+  '04': (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M18 20V10"/><path d="M12 20V4"/><path d="M6 20v-6"/>
+    </svg>
+  ),
+  '05': (
+    <svg width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="#2563EB" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
+      <path d="M14 2H6a2 2 0 0 0-2 2v16a2 2 0 0 0 2 2h12a2 2 0 0 0 2-2V8z"/><polyline points="14 2 14 8 20 8"/><line x1="16" y1="13" x2="8" y2="13"/><line x1="16" y1="17" x2="8" y2="17"/><polyline points="10 9 9 9 8 9"/>
+    </svg>
+  ),
+};
+
 export default function Home() {
   return (
     <>
@@ -106,7 +134,7 @@ export default function Home() {
             {PIPELINE_STAGES.map((s) => (
               <div className={styles.pipeStage} key={s.num}>
                 <span className={styles.pipeNum}>{s.num}</span>
-                <div className={styles.pipeIcon} />
+                <div className={styles.pipeIcon}>{PIPELINE_ICONS[s.num]}</div>
                 <h4>{s.title}</h4>
                 <p>{s.desc}</p>
                 <span className={styles.pipeStatus}>Queued</span>
