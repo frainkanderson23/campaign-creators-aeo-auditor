@@ -9,16 +9,17 @@ interface Props {
 }
 
 const STAGES = [
-  { id: 'validate', icon: 'globe',    title: 'Validate',  sub: 'DNS · robots.txt',  activeAt: 0,  doneAt: 8  },
-  { id: 'crawl',    icon: 'search',   title: 'Crawl',     sub: 'Indexing pages',    activeAt: 8,  doneAt: 20 },
-  { id: 'query',    icon: 'brain',    title: 'Query AI',  sub: 'Engine checks',     activeAt: 20, doneAt: 35 },
-  { id: 'score',    icon: 'chart',    title: 'Score',     sub: 'AEO dimensions',    activeAt: 35, doneAt: 50 },
-  { id: 'report',   icon: 'document', title: 'Report',    sub: 'Generating',        activeAt: 50, doneAt: 60 },
+  { id: 'validate', icon: 'globe',    title: 'Validate',  sub: 'DNS · robots.txt',  activeAt: 0,  doneAt: 3        },
+  { id: 'crawl',    icon: 'search',   title: 'Crawl',     sub: 'Indexing pages',    activeAt: 3,  doneAt: 12       },
+  { id: 'query',    icon: 'brain',    title: 'Query AI',  sub: 'Engine checks',     activeAt: 12, doneAt: 30       },
+  { id: 'score',    icon: 'chart',    title: 'Score',     sub: 'AEO dimensions',    activeAt: 30, doneAt: 50       },
+  { id: 'report',   icon: 'document', title: 'Report',    sub: 'Generating',        activeAt: 50, doneAt: Infinity },
 ] as const;
 
 type StageState = 'pending' | 'active' | 'done';
 
-function getStageState(activeAt: number, doneAt: number, elapsed: number): StageState {
+function getStageState(activeAt: number, doneAt: number, elapsed: number, completed: boolean): StageState {
+  if (completed) return 'done';
   if (elapsed >= doneAt) return 'done';
   if (elapsed >= activeAt) return 'active';
   return 'pending';
@@ -26,7 +27,7 @@ function getStageState(activeAt: number, doneAt: number, elapsed: number): Stage
 
 interface LogEntry { time: string; level: 'INFO' | 'OK'; msg: string; }
 
-function buildLog(domain: string, elapsed: number, startTime: Date): LogEntry[] {
+function buildLog(domain: string, elapsed: number, startTime: Date, completed: boolean): LogEntry[] {
   const ts = (offset: number) =>
     new Date(startTime.getTime() + offset * 1000).toTimeString().slice(0, 8);
 
@@ -41,9 +42,15 @@ function buildLog(domain: string, elapsed: number, startTime: Date): LogEntry[] 
     [45, 'INFO', 'Compiling AEO report…'],
   ];
 
-  return rows
+  const entries = rows
     .filter(([offset]) => elapsed >= offset)
     .map(([offset, level, msg]) => ({ time: ts(offset), level, msg }));
+
+  if (completed) {
+    entries.push({ time: ts(Math.floor(elapsed)), level: 'OK', msg: 'Audit complete · loading results…' });
+  }
+
+  return entries;
 }
 
 function GlobeIcon() {
@@ -126,11 +133,13 @@ function renderStageIcon(icon: string, state: StageState) {
 }
 
 export default function AuditProgress({ domain, auditId }: Props) {
-  const [elapsed, setElapsed] = useState(0);
-  const rafRef     = useRef<number | null>(null);
-  const t0Perf     = useRef<number>(0);
-  const startTime  = useRef<Date>(new Date());
+  const [elapsed, setElapsed]       = useState(0);
+  const [completed, setCompleted]   = useState(false);
+  const rafRef    = useRef<number | null>(null);
+  const t0Perf    = useRef<number>(0);
+  const startTime = useRef<Date>(new Date());
 
+  // RAF-based continuous timer — never resets
   useEffect(() => {
     t0Perf.current    = performance.now();
     startTime.current = new Date();
@@ -146,10 +155,41 @@ export default function AuditProgress({ domain, auditId }: Props) {
     };
   }, []);
 
-  const progress  = Math.min(99, (elapsed / 60) * 100);
-  const remaining = Math.max(0, Math.ceil(60 - elapsed));
-  const log       = buildLog(domain, elapsed, startTime.current);
-  const letter    = domain.charAt(0).toUpperCase();
+  // Poll for completion every 3 seconds
+  useEffect(() => {
+    const poll = async () => {
+      try {
+        const res = await fetch(`/api/audit/${auditId}/status`);
+        if (!res.ok) return;
+        const data = await res.json();
+        if (data.status === 'complete') setCompleted(true);
+      } catch {
+        // silent — next poll will retry
+      }
+    };
+
+    const id = setInterval(poll, 3000);
+    return () => clearInterval(id);
+  }, [auditId]);
+
+  // On completion: stop RAF, redirect after 1.5s
+  useEffect(() => {
+    if (!completed) return;
+    if (rafRef.current !== null) {
+      cancelAnimationFrame(rafRef.current);
+      rafRef.current = null;
+    }
+    const t = setTimeout(() => window.location.reload(), 1500);
+    return () => clearTimeout(t);
+  }, [completed]);
+
+  // Ease-out progress: fast start, decelerates, caps at 90% until complete
+  const t        = Math.min(1, elapsed / 60);
+  const eased    = t * (2 - t); // quadratic ease-out
+  const progress = completed ? 100 : Math.min(90, 90 * eased);
+  const elapsedS = Math.floor(elapsed);
+  const log      = buildLog(domain, elapsed, startTime.current, completed);
+  const letter   = domain.charAt(0).toUpperCase();
 
   return (
     <div className={styles.wrapper}>
@@ -160,7 +200,7 @@ export default function AuditProgress({ domain, auditId }: Props) {
         <h1 className={styles.domainTitle}>{domain}</h1>
         <div className={styles.headerMeta}>
           <ClockIcon />
-          <span>Started a few seconds ago</span>
+          <span>{elapsedS}s elapsed</span>
           <code className={styles.auditId}>{auditId}</code>
         </div>
       </header>
@@ -176,15 +216,17 @@ export default function AuditProgress({ domain, auditId }: Props) {
             <span>sitemap.xml found</span>
           </div>
         </div>
-        <span className={styles.inProgressBadge}>IN PROGRESS</span>
+        <span className={styles.inProgressBadge}>
+          {completed ? 'COMPLETE' : 'IN PROGRESS'}
+        </span>
       </div>
 
       {/* ── Pipeline ───────────────────────────────────── */}
       <div className={styles.pipeline}>
         {STAGES.map((stage, i) => {
-          const state    = getStageState(stage.activeAt, stage.doneAt, elapsed);
+          const state    = getStageState(stage.activeAt, stage.doneAt, elapsed, completed);
           const prevDone = i > 0
-            ? getStageState(STAGES[i - 1].activeAt, STAGES[i - 1].doneAt, elapsed) === 'done'
+            ? getStageState(STAGES[i - 1].activeAt, STAGES[i - 1].doneAt, elapsed, completed) === 'done'
             : false;
 
           return (
@@ -212,7 +254,11 @@ export default function AuditProgress({ domain, auditId }: Props) {
         <div className={styles.progressTrack}>
           <div className={styles.progressFill} style={{ width: `${progress}%` }} />
         </div>
-        <p className={styles.progressLabel}>{Math.round(progress)}% · ~{remaining}s remaining</p>
+        <p className={styles.progressLabel}>
+          {completed
+            ? '100% · Audit complete'
+            : `${Math.round(progress)}% · ${elapsedS}s elapsed`}
+        </p>
       </div>
 
       {/* ── Live log ───────────────────────────────────── */}
@@ -228,7 +274,7 @@ export default function AuditProgress({ domain, auditId }: Props) {
               <span className={styles.logMsg}>{entry.msg}</span>
             </div>
           ))}
-          <span className={styles.logCursor} />
+          {!completed && <span className={styles.logCursor} />}
         </div>
       </div>
 
