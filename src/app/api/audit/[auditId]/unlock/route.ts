@@ -88,18 +88,18 @@ export async function POST(
     .maybeSingle();
 
   // ── 1. Save lead to Supabase ──────────────────────────────────────────
-  try {
-    await supabase.from('leads').upsert(
-      {
-        audit_request_id: auditId,
-        email,
-        name,
-      },
-      { onConflict: 'email,audit_request_id' },
-    );
-  } catch (err) {
-    console.error('[unlock] Failed to save lead to Supabase:', err);
-    // Non-blocking — continue to unlock even if DB write fails
+  const { error: leadError } = await supabase.from('leads').upsert(
+    {
+      audit_request_id: auditId,
+      email,
+      name,
+    },
+    { onConflict: 'email,audit_request_id' },
+  );
+  if (leadError) {
+    console.error('[unlock] Supabase leads upsert failed:', JSON.stringify(leadError));
+  } else {
+    console.log('[unlock] Lead saved to Supabase:', email);
   }
 
   // Touch the audit_requests updated_at
