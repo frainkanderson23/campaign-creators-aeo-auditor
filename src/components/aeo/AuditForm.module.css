@@ -30,7 +30,7 @@
 .prefix {
   padding: 0 10px 0 14px;
   color: var(--ink-3);
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   font-size: 14px;
   user-select: none;
   white-space: nowrap;
@@ -43,7 +43,7 @@
   outline: none;
   background: transparent;
   font-size: 16px;
-  font-family: var(--font-mono);
+  font-family: var(--font-body);
   color: var(--ink);
   padding: 14px 0;
   letter-spacing: -0.01em;
