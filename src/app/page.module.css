@@ -23,15 +23,15 @@
   width: 1100px;
   height: 1100px;
   transform: translateX(-50%);
-  background: radial-gradient(closest-side, rgba(37, 99, 235, 0.10), transparent 70%);
+  background: radial-gradient(closest-side, rgba(255, 107, 53, 0.08), transparent 70%);
 }
 
 .heroGrid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(to right, rgba(37, 99, 235, 0.06) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(37, 99, 235, 0.06) 1px, transparent 1px);
+    linear-gradient(to right, rgba(27, 43, 75, 0.05) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(27, 43, 75, 0.05) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 70% 50% at 50% 30%, black 30%, transparent 80%);
   -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 30%, black 30%, transparent 80%);
@@ -539,7 +539,7 @@
 
 /* ── CTA card ── */
 .ctaCard {
-  background: linear-gradient(135deg, #0B1220 0%, #1E3A8A 100%);
+  background: linear-gradient(135deg, #0F1E35 0%, #1B2B4B 100%);
   border-radius: var(--radius-xl);
   padding: 48px;
   color: white;
@@ -554,7 +554,7 @@
   top: -120px;
   width: 380px;
   height: 380px;
-  background: radial-gradient(closest-side, rgba(99,102,241,.45), transparent);
+  background: radial-gradient(closest-side, rgba(255,107,53,.35), transparent);
   pointer-events: none;
 }
 

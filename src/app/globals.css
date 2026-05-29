@@ -4,19 +4,19 @@
    Source of truth: design/handoff/styles.css + styles-2.css
    Variable names match handoff exactly. */
 :root {
-  --primary: #2563EB;
-  --primary-700: #1D4ED8;
-  --primary-900: #1E3A8A;
-  --secondary: #6366F1;
-  --accent: #EFF6FF;
-  --accent-2: #F5F3FF;
-  --cream: #FAF8F3;
-  --warm: #FEF8F0;
-  --tint-1: #F8FAFF;
+  --primary: #FF6B35;
+  --primary-700: #E85A24;
+  --primary-900: #CC4A14;
+  --secondary: #1B2B4B;
+  --accent: #FFF4EF;
+  --accent-2: #FFF0EA;
+  --cream: #FAF8F6;
+  --warm: #FEF4F0;
+  --tint-1: #F8F9FA;
   --bg: #FFFFFF;
-  --ink: #15201f;
-  --ink-2: #4A5568;
-  --ink-3: #7C8A98;
+  --ink: #1B2B4B;
+  --ink-2: #3D5275;
+  --ink-3: #7A8FA6;
   --line: #E5EAF0;
   --line-strong: #CDD5DF;
   --good: #10B981;
@@ -33,7 +33,7 @@
   /* Shadows — exact from handoff */
   --shadow-1: 0 1px 2px rgba(15, 23, 42, .05);
   --shadow-2: 0 6px 16px -8px rgba(15, 23, 42, .12), 0 1px 2px rgba(15, 23, 42, .04);
-  --shadow-3: 0 24px 56px -28px rgba(37, 99, 235, .35), 0 4px 12px -4px rgba(15, 23, 42, .08);
+  --shadow-3: 0 24px 56px -28px rgba(255, 107, 53, .30), 0 4px 12px -4px rgba(27, 43, 75, .08);
 
   /* Typography */
   --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
@@ -183,7 +183,7 @@ button { font-family: inherit; cursor: pointer; }
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 .input::placeholder { color: var(--ink-3); }
-.input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(37,99,235,.12); }
+.input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(255,107,53,.12); }
 .input[aria-invalid='true'] { border-color: var(--bad); }
 .label { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--ink); margin-bottom: 0.375rem; }
 .form-error { font-size: 0.8125rem; color: var(--bad); }
