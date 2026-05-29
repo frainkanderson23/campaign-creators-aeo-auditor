@@ -170,10 +170,13 @@ export async function POST(
       auditDate: audit.created_at,
     };
 
-    // Fire-and-forget
-    syncAeoLead(payload).catch((err) => {
+    // Await so Vercel doesn't kill the function before HubSpot calls complete
+    try {
+      const hsResult = await syncAeoLead(payload);
+      console.log('[hubspot] Sync result:', hsResult ? `contact ${hsResult.id}` : 'skipped');
+    } catch (err) {
       console.error('[unlock] HubSpot sync failed:', err);
-    });
+    }
   } else {
     console.warn('[unlock] No audit results found for HubSpot sync — audit may still be processing');
   }
