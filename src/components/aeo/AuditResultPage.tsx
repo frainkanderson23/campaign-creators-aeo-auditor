@@ -3,6 +3,22 @@
 import { useEffect, useRef, useState } from 'react';
 import styles from './AuditResultPage.module.css';
 
+interface ProbeResult {
+  prompt: string;
+  response: string;
+  cited: boolean;
+  mentionedDomains: string[];
+  snippet: string | null;
+}
+
+interface AiProbe {
+  engine: string;
+  results: ProbeResult[];
+  citedCount: number;
+  totalPrompts: number;
+  status: 'cited' | 'partial' | 'missing';
+}
+
 interface RawFindings {
   robots?: {
     gptBotDisallowed?: boolean;
@@ -32,6 +48,7 @@ interface RawFindings {
   wordCount?: number;
   lastModified?: string | null;
   schemaMarkup?: unknown[];
+  aiProbe?: AiProbe | null;
 }
 
 type FindingItem = { pass: boolean; text: string } | { meta: string };
@@ -232,18 +249,25 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     { label: 'Brand Mentions', key: 'brand', score: 0, getFindings: null },
   ];
 
+  const aiProbe = rf?.aiProbe;
+  const claudeStatus = aiProbe
+    ? aiProbe.status.toUpperCase()
+    : 'PENDING';
+
   const engines = [
-    { name: 'ChatGPT', bg: '#10A37F', icon: '✦', status: 'PARTIAL' },
-    { name: 'Perplexity', bg: '#20808D', icon: '◎', status: 'MISSING' },
-    { name: 'Google AI', bg: 'linear-gradient(135deg,#4285F4,#34A853)', icon: '◈', status: 'PARTIAL' },
-    { name: 'Claude', bg: '#D97757', icon: '◆', status: 'MISSING' },
+    { name: 'ChatGPT', bg: '#10A37F', icon: '✦', status: 'PARTIAL', comingSoon: true },
+    { name: 'Perplexity', bg: '#20808D', icon: '◎', status: 'MISSING', comingSoon: true },
+    { name: 'Google AI', bg: 'linear-gradient(135deg,#4285F4,#34A853)', icon: '◈', status: 'PARTIAL', comingSoon: true },
+    { name: 'Claude', bg: '#D97757', icon: '◆', status: claudeStatus, comingSoon: false },
   ];
 
-  const samplePrompts = [
-    `Best tools for ${domain.split('.')[0]} businesses`,
-    `How does ${domain} compare to alternatives?`,
-    `What do customers say about ${domain.split('.')[0]}?`,
-  ];
+  const samplePrompts = aiProbe?.results?.length
+    ? aiProbe.results
+    : [
+        { prompt: `Best tools for ${domain.split('.')[0]} businesses`, cited: false, snippet: null },
+        { prompt: `How does ${domain} compare to alternatives?`, cited: false, snippet: null },
+        { prompt: `What do customers say about ${domain.split('.')[0]}?`, cited: false, snippet: null },
+      ];
 
   const recs = [
     { priority: 'high', title: 'Add structured data markup', desc: 'Implement JSON-LD schema for your key pages to improve AI engine crawlability and entity recognition.' },
@@ -253,8 +277,11 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
     { priority: 'low', title: 'Establish brand entity', desc: 'Create a Wikipedia-style entity page and ensure NAP consistency across the web.' },
   ];
 
-  const badgeClass = (status: string) =>
-    status === 'PARTIAL' ? styles.erBadgePartial : styles.erBadgeMissing;
+  const badgeClass = (status: string) => {
+    if (status === 'CITED') return styles.erBadgeCited;
+    if (status === 'PARTIAL') return styles.erBadgePartial;
+    return styles.erBadgeMissing;
+  };
 
   return (
     <div className={styles.auditPage}>
@@ -396,7 +423,11 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
                     <span className={styles.erIcon} style={{ background: eng.bg }}>{eng.icon}</span>
                     <span>{eng.name}</span>
                   </div>
-                  <span className={`${styles.erBadge} ${badgeClass(eng.status)}`}>{eng.status}</span>
+                  {eng.comingSoon ? (
+                    <span className={`${styles.erBadge} ${styles.erBadgeMissing}`} title="Coming soon">COMING SOON</span>
+                  ) : (
+                    <span className={`${styles.erBadge} ${badgeClass(eng.status)}`}>{eng.status}</span>
+                  )}
                 </div>
               ))}
             </div>
@@ -405,14 +436,35 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
 
         {/* Sample Prompts */}
         <div className={styles.reportCard} style={{ marginTop: 24 }}>
-          <h3 className={styles.cardTitle}>Sample prompts where you&apos;re not cited</h3>
+          <h3 className={styles.cardTitle}>
+            {aiProbe ? 'Claude AI — sample prompts tested' : 'Sample prompts where you\'re not cited'}
+          </h3>
+          {aiProbe && (
+            <p style={{ fontSize: 13, color: 'var(--color-text-secondary)', marginBottom: 16, marginTop: -8 }}>
+              {aiProbe.citedCount} of {aiProbe.totalPrompts} prompts cited your domain
+            </p>
+          )}
           <div className={styles.prompts}>
-            {samplePrompts.map((q) => (
-              <div key={q} className={styles.promptRow}>
-                <span className={styles.promptQ}>&ldquo;{q}&rdquo;</span>
-                <span className={`${styles.erBadge} ${styles.erBadgeMissing}`}>NOT CITED</span>
-              </div>
-            ))}
+            {samplePrompts.map((item, i) => {
+              const prompt = typeof item === 'string' ? item : item.prompt;
+              const cited = typeof item === 'string' ? false : item.cited;
+              const snippet = typeof item === 'string' ? null : item.snippet;
+              return (
+                <div key={i} className={styles.promptRow} style={{ flexDirection: 'column', alignItems: 'flex-start', gap: 8 }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', width: '100%', gap: 16 }}>
+                    <span className={styles.promptQ}>&ldquo;{prompt}&rdquo;</span>
+                    <span className={`${styles.erBadge} ${cited ? styles.erBadgeCited : styles.erBadgeMissing}`}>
+                      {cited ? 'CITED' : 'NOT CITED'}
+                    </span>
+                  </div>
+                  {snippet && (
+                    <p style={{ fontSize: 12, color: 'var(--color-text-secondary)', margin: 0, lineHeight: 1.5, fontStyle: 'italic' }}>
+                      {snippet}
+                    </p>
+                  )}
+                </div>
+              );
+            })}
           </div>
         </div>
 
