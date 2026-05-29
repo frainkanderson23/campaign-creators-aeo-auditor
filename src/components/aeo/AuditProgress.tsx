@@ -121,7 +121,7 @@ function DocumentIcon() {
 function CheckIcon() {
   return (
     <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth={2.5} strokeLinecap="round" strokeLinejoin="round">
-      <polyline points="20 6 9 17 4 12" />
+      <polyline className={styles.checkPath} points="20 6 9 17 4 12" />
     </svg>
   );
 }
@@ -222,6 +222,7 @@ export default function AuditProgress({ domain, auditId }: Props) {
 
       {/* ── Domain card ────────────────────────────────── */}
       <div className={styles.domainCard}>
+        <div className={styles.scanOverlay} />
         <div className={styles.faviconCircle}>{letter}</div>
         <div className={styles.domainCardBody}>
           <div className={styles.domainUrl}>{domain}</div>
@@ -252,6 +253,7 @@ export default function AuditProgress({ domain, auditId }: Props) {
               <div className={styles.pipeStage} data-state={state}>
                 <div className={styles.pipeIconWrap}>
                   {state === 'active' && <div className={styles.pulseRing} />}
+                  {state === 'active' && <div className={styles.pulseRing2} />}
                   <div className={styles.pipeIcon}>
                     {renderStageIcon(stage.icon, state)}
                   </div>
@@ -263,6 +265,9 @@ export default function AuditProgress({ domain, auditId }: Props) {
           );
         })}
       </div>
+
+      {/* ── Data stream bar ────────────────────────────── */}
+      <div className={styles.dataStream} />
 
       {/* ── Progress bar ───────────────────────────────── */}
       <div className={styles.progressSection}>
