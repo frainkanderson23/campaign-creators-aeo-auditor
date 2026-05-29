@@ -5,12 +5,14 @@ export function Header() {
   return (
     <header className={styles.header} role="banner">
       <div className={styles.inner}>
-        <Link href="/" className={styles.logo} aria-label="AEO Auditor home">
-          <span className={styles.logoMark} aria-hidden="true" />
-          <span className={styles.logoText}>
-            <strong className={styles.logoName}>AEO Auditor</strong>
-            <small className={styles.logoSub}>by Campaign Creators</small>
-          </span>
+        <Link href="/" className={styles.logo} aria-label="Campaign Creators — AEO Auditor">
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="https://www.campaigncreators.com/hubfs/cc-logo-color-horizontal%20(1).png"
+            alt="Campaign Creators"
+            height={36}
+            className={styles.logoImg}
+          />
         </Link>
 
         <nav className={styles.nav} aria-label="Main navigation">

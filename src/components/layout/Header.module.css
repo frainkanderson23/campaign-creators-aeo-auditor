@@ -2,9 +2,7 @@
   position: sticky;
   top: 0;
   z-index: 40;
-  background: rgba(255, 255, 255, 0.85);
-  backdrop-filter: saturate(160%) blur(12px);
-  -webkit-backdrop-filter: saturate(160%) blur(12px);
+  background: #FFFFFF;
   border-bottom: 1px solid var(--line);
 }
 
@@ -27,55 +25,13 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: var(--ink);
   text-decoration: none;
   flex-shrink: 0;
 }
 
-.logoMark {
-  position: relative;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  display: grid;
-  place-items: center;
-  box-shadow: var(--shadow-2);
-  flex-shrink: 0;
-}
-
-.logoMark::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border: 1.5px solid rgba(255, 255, 255, 0.85);
-  border-radius: 3px;
-  border-bottom-color: transparent;
-  border-right-color: transparent;
-  transform: rotate(-45deg);
-}
-
-.logoText {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-
-.logoName {
-  font-size: 15px;
-  font-weight: 700;
-  color: var(--ink);
-}
-
-.logoSub {
-  font-size: 11px;
-  color: var(--ink-3);
-  margin-top: 2px;
-  letter-spacing: 0.01em;
-  font-style: normal;
+.logoImg {
+  height: 36px;
+  width: auto;
 }
 
 /* ── Nav ── */
@@ -90,14 +46,14 @@
 }
 
 .navLink {
-  font-size: 14px;
-  color: var(--ink-2);
+  font-size: 16px;
+  color: var(--ink);
   font-weight: 500;
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
-.navLink:hover { color: var(--primary); }
+.navLink:hover { color: var(--color-blue); }
 
 /* ── CTAs ── */
 .ctas {
@@ -110,9 +66,8 @@
 .ctaGhost {
   display: inline-flex;
   align-items: center;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: var(--radius-md);
+  padding: 8px 14px;
+  border-radius: var(--radius-btn);
   font-size: 14px;
   font-weight: 500;
   color: var(--ink-2);
@@ -129,22 +84,20 @@
   display: inline-flex;
   align-items: center;
   gap: 6px;
-  height: 36px;
-  padding: 0 14px;
-  border-radius: var(--radius-md);
+  padding: 12px 24px;
+  border-radius: var(--radius-btn);
   background: var(--primary);
   color: white;
-  font-size: 14px;
-  font-weight: 500;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   text-decoration: none;
-  box-shadow: var(--shadow-2);
-  transition: all 0.15s ease;
+  box-shadow: var(--shadow-card);
+  transition: background 0.15s ease;
 }
 
 .ctaPrimary:hover {
   background: var(--primary-700);
-  transform: translateY(-1px);
-  box-shadow: var(--shadow-3);
 }
 
 @media (max-width: 480px) {

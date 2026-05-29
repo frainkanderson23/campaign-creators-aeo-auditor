@@ -1,11 +1,11 @@
-/* All tokens from design/handoff/styles.css */
+/* All tokens from globals.css / CC Web UI Kit v2.0 */
 
 /* ── Hero ── */
 .hero {
   position: relative;
   padding: 80px 0 64px;
   overflow: hidden;
-  background: var(--bg);
+  background: var(--color-dark-navy);
 }
 
 .heroBg {
@@ -23,15 +23,15 @@
   width: 1100px;
   height: 1100px;
   transform: translateX(-50%);
-  background: radial-gradient(closest-side, rgba(255, 107, 53, 0.08), transparent 70%);
+  background: radial-gradient(closest-side, rgba(53, 255, 216, 0.07), transparent 70%);
 }
 
 .heroGrid {
   position: absolute;
   inset: 0;
   background-image:
-    linear-gradient(to right, rgba(27, 43, 75, 0.05) 1px, transparent 1px),
-    linear-gradient(to bottom, rgba(27, 43, 75, 0.05) 1px, transparent 1px);
+    linear-gradient(to right, rgba(255, 255, 255, 0.04) 1px, transparent 1px),
+    linear-gradient(to bottom, rgba(255, 255, 255, 0.04) 1px, transparent 1px);
   background-size: 56px 56px;
   mask-image: radial-gradient(ellipse 70% 50% at 50% 30%, black 30%, transparent 80%);
   -webkit-mask-image: radial-gradient(ellipse 70% 50% at 50% 30%, black 30%, transparent 80%);
@@ -60,23 +60,22 @@
   align-items: center;
   gap: 8px;
   padding: 6px 12px 6px 8px;
-  background: white;
-  border: 1px solid var(--line);
+  background: rgba(255, 255, 255, 0.08);
+  border: 1px solid rgba(255, 255, 255, 0.18);
   border-radius: 999px;
   font-size: 12px;
   font-weight: 500;
-  color: var(--ink-2);
-  box-shadow: var(--shadow-1);
+  color: rgba(255, 255, 255, 0.75);
 }
 
-.eyebrowStrong { color: var(--ink); font-weight: 600; }
+.eyebrowStrong { color: var(--color-accent); font-weight: 600; }
 
 .pulse {
   position: relative;
   width: 8px;
   height: 8px;
   border-radius: 50%;
-  background: var(--good);
+  background: var(--color-accent);
   flex-shrink: 0;
 }
 
@@ -85,7 +84,7 @@
   position: absolute;
   inset: -2px;
   border-radius: 50%;
-  background: var(--good);
+  background: var(--color-accent);
   opacity: 0.35;
   animation: heroPulse 1.8s ease-out infinite;
 }
@@ -97,26 +96,23 @@
 
 /* Heading */
 .heading {
-  font-size: clamp(40px, 5.4vw, 64px);
-  line-height: 1.04;
+  font-size: clamp(40px, 5.4vw, 62px);
+  line-height: 1;
   letter-spacing: -0.035em;
   font-weight: 700;
   margin: 22px 0 18px;
-  color: var(--ink);
+  color: white;
   text-wrap: balance;
 }
 
 .headingAccent {
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  -webkit-background-clip: text;
-  background-clip: text;
-  color: transparent;
+  color: var(--color-accent);
 }
 
 .subtitle {
   font-size: 19px;
   line-height: 1.55;
-  color: var(--ink-2);
+  color: rgba(255, 255, 255, 0.8);
   max-width: 640px;
   margin: 0 auto;
   text-wrap: pretty;
@@ -141,7 +137,7 @@
   flex-wrap: wrap;
   gap: 8px 24px;
   font-size: 13px;
-  color: var(--ink-3);
+  color: rgba(255, 255, 255, 0.55);
 }
 
 .trustItem {
@@ -154,7 +150,7 @@
   width: 3px;
   height: 3px;
   border-radius: 50%;
-  background: var(--line-strong);
+  background: rgba(255, 255, 255, 0.25);
   display: block;
 }
 
@@ -162,6 +158,7 @@
 .section {
   padding: 96px 0;
   position: relative;
+  background: #FFFFFF;
 }
 
 .sectionTint {
@@ -172,7 +169,7 @@
 
 .sectionCream {
   padding: 96px 0;
-  background: var(--cream);
+  background: var(--tint-1);
   position: relative;
 }
 
@@ -196,13 +193,23 @@
   margin: 0 auto 56px;
 }
 
+/* Accent line above H2 */
+.sectionTitle::before {
+  content: '';
+  display: block;
+  width: 40px;
+  height: 4px;
+  background: var(--color-accent);
+  margin: 0 auto 16px;
+}
+
 .kicker {
   display: inline-block;
   text-transform: uppercase;
   letter-spacing: 0.14em;
   font-size: 12px;
   font-weight: 600;
-  color: var(--primary);
+  color: var(--color-navy);
   margin-bottom: 14px;
 }
 
@@ -231,7 +238,8 @@
   gap: 0;
   background: white;
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   padding: 4px;
 }
 
@@ -242,7 +250,7 @@
 .pipeStage {
   position: relative;
   padding: 22px 20px;
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-md);
 }
 
 .pipeStage + .pipeStage::before {
@@ -312,7 +320,8 @@
   gap: 16px;
   background: white;
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   padding: 24px;
 }
 
@@ -385,12 +394,13 @@
   padding: 18px;
   background: white;
   border: 1px solid var(--line);
-  border-radius: var(--radius-lg);
+  border-radius: var(--radius-card);
+  box-shadow: var(--shadow-card);
   transition: all 0.2s ease;
 }
 
 .learnItem:hover {
-  border-color: var(--primary);
+  border-color: var(--color-accent);
   transform: translateX(4px);
 }
 
@@ -398,7 +408,7 @@
   width: 36px;
   height: 36px;
   border-radius: var(--radius-md);
-  background: linear-gradient(135deg, var(--primary), var(--secondary));
+  background: var(--color-navy);
   color: white;
   display: grid;
   place-items: center;
@@ -427,9 +437,9 @@
 .reportPreview {
   background: white;
   border: 1px solid var(--line);
-  border-radius: var(--radius-xl);
+  border-radius: var(--radius-card);
   padding: 24px;
-  box-shadow: var(--shadow-2);
+  box-shadow: var(--shadow-card);
 }
 
 .reportPreviewHead {
@@ -526,9 +536,9 @@
   transition: width 1.2s cubic-bezier(.4,0,.2,1);
 }
 
-.barFill_good { background: linear-gradient(90deg, #10B981, #34D399); }
+.barFill_good { background: linear-gradient(90deg, var(--color-accent), #2de8c2); }
 .barFill_warn { background: linear-gradient(90deg, #F59E0B, #FBBF24); }
-.barFill_bad  { background: linear-gradient(90deg, #EF4444, #F87171); }
+.barFill_bad  { background: linear-gradient(90deg, var(--color-error), #f2654f); }
 
 .barVal {
   font-family: var(--font-mono);
@@ -539,8 +549,8 @@
 
 /* ── CTA card ── */
 .ctaCard {
-  background: linear-gradient(135deg, #0F1E35 0%, #1B2B4B 100%);
-  border-radius: var(--radius-xl);
+  background: var(--color-dark-navy);
+  border-radius: var(--radius-card);
   padding: 48px;
   color: white;
   position: relative;
@@ -554,7 +564,7 @@
   top: -120px;
   width: 380px;
   height: 380px;
-  background: radial-gradient(closest-side, rgba(255,107,53,.35), transparent);
+  background: radial-gradient(closest-side, rgba(53, 255, 216, 0.15), transparent);
   pointer-events: none;
 }
 
@@ -588,15 +598,15 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 52px;
-  padding: 0 22px;
-  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  border-radius: var(--radius-btn);
   background: white;
-  color: var(--ink);
-  font-size: 15px;
+  color: var(--color-dark-navy);
+  font-size: 16px;
   font-weight: 600;
+  letter-spacing: 0.5px;
   text-decoration: none;
-  transition: all 0.15s ease;
+  transition: background 0.15s ease;
 }
 
 .ctaBtnPrimary:hover { background: rgba(255, 255, 255, 0.92); }
@@ -605,20 +615,19 @@
   display: inline-flex;
   align-items: center;
   gap: 8px;
-  height: 52px;
-  padding: 0 22px;
-  border-radius: var(--radius-lg);
+  padding: 16px 24px;
+  border-radius: var(--radius-btn);
   background: transparent;
-  border: 1px solid rgba(255, 255, 255, 0.25);
+  border: 1px solid rgba(255, 255, 255, 0.35);
   color: white;
-  font-size: 15px;
+  font-size: 16px;
   font-weight: 500;
   cursor: pointer;
-  transition: all 0.15s ease;
+  transition: border-color 0.15s ease;
   font-family: var(--font-sans);
 }
 
-.ctaBtnOutline:hover { border-color: rgba(255, 255, 255, 0.5); }
+.ctaBtnOutline:hover { border-color: rgba(255, 255, 255, 0.6); }
 
 @media (max-width: 640px) {
   .ctaCard { padding: 32px 24px; }

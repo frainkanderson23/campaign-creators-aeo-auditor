@@ -1,5 +1,5 @@
 .footer {
-  background: #0B1220;
+  background: var(--color-dark-navy);
   color: rgba(255, 255, 255, 0.7);
   padding: 56px 0 32px;
   font-size: 14px;
@@ -36,53 +36,13 @@
 .logo {
   display: flex;
   align-items: center;
-  gap: 10px;
-  font-weight: 700;
-  letter-spacing: -0.01em;
-  color: white;
+  text-decoration: none;
 }
 
-.logoMark {
-  position: relative;
-  width: 28px;
-  height: 28px;
-  border-radius: 7px;
-  background: linear-gradient(135deg, var(--primary) 0%, var(--secondary) 100%);
-  display: grid;
-  place-items: center;
-  box-shadow: var(--shadow-2);
-  flex-shrink: 0;
-}
-
-.logoMark::after {
-  content: '';
-  position: absolute;
-  inset: 6px;
-  border: 1.5px solid rgba(255, 255, 255, 0.85);
-  border-radius: 3px;
-  border-bottom-color: transparent;
-  border-right-color: transparent;
-  transform: rotate(-45deg);
-}
-
-.logoText {
-  display: flex;
-  flex-direction: column;
-  line-height: 1;
-}
-
-.logoName {
-  font-size: 15px;
-  font-weight: 700;
-  color: white;
-}
-
-.logoSub {
-  font-size: 11px;
-  color: rgba(255, 255, 255, 0.5);
-  margin-top: 2px;
-  letter-spacing: 0.01em;
-  font-style: normal;
+.logoImg {
+  height: 32px;
+  width: auto;
+  filter: brightness(0) invert(1);
 }
 
 .tagline {
@@ -113,12 +73,12 @@
 }
 
 .link {
-  color: rgba(255, 255, 255, 0.75);
+  color: rgba(255, 255, 255, 0.7);
   text-decoration: none;
   transition: color 0.15s ease;
 }
 
-.link:hover { color: white; }
+.link:hover { color: var(--color-accent); }
 
 /* Copy bar */
 .copy {

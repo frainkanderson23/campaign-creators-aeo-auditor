@@ -1,73 +1,95 @@
 @import "tailwindcss";
 
-/* ─── AEO Auditor — Design Handoff Tokens ───
-   Source of truth: design/handoff/styles.css + styles-2.css
-   Variable names match handoff exactly. */
+/* ─── Campaign Creators Brand System — CC Web UI Kit v2.0 ───
+   All tokens map to the CC brand palette. */
 :root {
-  --primary: #FF6B35;
-  --primary-700: #E85A24;
-  --primary-900: #CC4A14;
-  --secondary: #1B2B4B;
-  --accent: #FFF4EF;
-  --accent-2: #FFF0EA;
-  --cream: #FAF8F6;
-  --warm: #FEF4F0;
-  --tint-1: #F8F9FA;
+  /* ── CC Brand Palette ── */
+  --color-navy: #0E3860;
+  --color-dark-navy: #0C2237;
+  --color-white: #FFFFFF;
+  --color-cool-white: #F8F9FC;
+  --color-accent: #35FFD8;
+  --color-violet: #8D11ED;
+  --color-blue: #1084FF;
+  --color-error: #EE3B27;
+  --color-n900: #212529;
+  --color-n700: #485059;
+  --color-n600: #868E96;
+  --color-n400: #CED4DA;
+  --color-n300: #DEE2E6;
+  --color-n100: #F1F3F5;
+
+  /* ── Semantic aliases → CC brand ── */
+  --primary: #0E3860;
+  --primary-700: #0C2237;
+  --primary-900: #091929;
+  --secondary: #35FFD8;
+  --accent: #F8F9FC;
+  --accent-2: #F8F9FC;
+  --cream: #F8F9FC;
+  --warm: #F8F9FC;
+  --tint-1: #F8F9FC;
   --bg: #FFFFFF;
-  --ink: #1B2B4B;
-  --ink-2: #3D5275;
-  --ink-3: #7A8FA6;
-  --line: #E5EAF0;
-  --line-strong: #CDD5DF;
-  --good: #10B981;
+  --ink: #0C2237;
+  --ink-2: #485059;
+  --ink-3: #868E96;
+  --line: #DEE2E6;
+  --line-strong: #CED4DA;
+
+  /* ── Status / Data-viz ── */
+  --good: #35FFD8;
   --warn: #F59E0B;
-  --bad: #EF4444;
+  --bad: #EE3B27;
 
-  /* Radii — exact from handoff */
-  --radius-sm: 4px;
-  --radius-md: 6px;
-  --radius-lg: 10px;
-  --radius-xl: 14px;
-  --radius-full: 9999px;
-
-  /* Shadows — exact from handoff */
-  --shadow-1: 0 1px 2px rgba(15, 23, 42, .05);
-  --shadow-2: 0 6px 16px -8px rgba(15, 23, 42, .12), 0 1px 2px rgba(15, 23, 42, .04);
-  --shadow-3: 0 24px 56px -28px rgba(255, 107, 53, .30), 0 4px 12px -4px rgba(27, 43, 75, .08);
-
-  /* Typography */
-  --font-sans: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-display: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
-  --font-body: "Inter", ui-sans-serif, system-ui, -apple-system, sans-serif;
+  /* ── Typography ── */
+  --font-heading: 'Inter', sans-serif;
+  --font-sans: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-display: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
+  --font-body: 'Inter', ui-sans-serif, system-ui, -apple-system, sans-serif;
   --font-mono: "JetBrains Mono", ui-monospace, "SF Mono", Menlo, Consolas, monospace;
 
-  /* Semantic aliases */
+  /* ── Radii ── */
+  --radius-btn: 3px;
+  --radius-card: 8px;
+  --radius-sm: 3px;
+  --radius-md: 8px;
+  --radius-lg: 8px;
+  --radius-xl: 8px;
+  --radius-full: 9999px;
+
+  /* ── Shadows ── */
+  --shadow-card: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-1: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-2: 0 2px 4px rgba(0, 0, 0, 0.06);
+  --shadow-3: 0 4px 16px rgba(14, 56, 96, 0.12);
+
+  /* ── Grade tokens — data-viz ONLY ── */
+  --grade-a: #35FFD8;
+  --grade-b: #65A30D;
+  --grade-c: #CA8A04;
+  --grade-d: #EA580C;
+  --grade-f: #EE3B27;
+
+  /* ── Spacing ── */
+  --space-section: 48px;
+  --space-card: 16px;
+
+  /* ── Transitions ── */
+  --transition-fast: 120ms ease;
+  --transition-base: 150ms ease;
+  --transition-slow: 240ms ease;
+
+  /* ── DESIGN_SYSTEM.md semantic aliases ── */
   --color-primary: var(--primary);
   --color-secondary: var(--secondary);
-  --color-accent: var(--accent);
   --color-background: var(--bg);
   --color-surface: var(--tint-1);
+  --color-surface-2: #F1F3F5;
   --color-text: var(--ink);
   --color-text-secondary: var(--ink-2);
   --color-text-muted: var(--ink-3);
   --color-border: var(--line);
   --color-border-strong: var(--line-strong);
-
-  /* Grade tokens — data-viz ONLY */
-  --grade-a: #16A34A;
-  --grade-b: #65A30D;
-  --grade-c: #CA8A04;
-  --grade-d: #EA580C;
-  --grade-f: #DC2626;
-
-  /* Spacing */
-  --space-section: 48px;
-  --space-card: 16px;
-
-  /* Transitions */
-  --transition-fast: 120ms ease;
-  --transition-base: 150ms ease;
-  --transition-slow: 240ms ease;
 }
 
 @media (min-width: 768px) {
@@ -115,6 +137,8 @@ body {
   background: var(--bg);
   color: var(--ink);
   font-family: var(--font-sans);
+  font-size: 18px;
+  line-height: 1.5;
   font-feature-settings: "ss01", "cv11";
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
@@ -143,28 +167,29 @@ button { font-family: inherit; cursor: pointer; }
   align-items: center;
   justify-content: center;
   gap: 8px;
-  height: 40px;
-  padding: 0 16px;
-  border-radius: var(--radius-md);
+  padding: 16px 24px;
+  border-radius: var(--radius-btn);
   border: 1px solid transparent;
   font-family: var(--font-sans);
-  font-size: 14px;
-  font-weight: 500;
-  letter-spacing: -0.005em;
+  font-size: 16px;
+  font-weight: 600;
+  letter-spacing: 0.5px;
   transition: all .15s ease;
   white-space: nowrap;
   background: transparent;
   color: var(--ink);
   cursor: pointer;
 }
-.btn-primary { background: var(--primary); color: white; box-shadow: var(--shadow-2); }
-.btn-primary:hover { background: var(--primary-700); transform: translateY(-1px); box-shadow: var(--shadow-3); }
-.btn-primary:active { transform: translateY(0); }
+.btn-primary { background: var(--primary); color: white; box-shadow: var(--shadow-card); }
+.btn-primary:hover { background: var(--primary-700); }
+.btn-accent { background: var(--secondary); color: var(--primary); }
+.btn-accent:hover { background: #2de8c2; }
 .btn-ghost { background: transparent; color: var(--ink-2); }
 .btn-ghost:hover { color: var(--ink); background: var(--accent); }
-.btn-outline { background: white; border-color: var(--line-strong); color: var(--ink); }
-.btn-outline:hover { border-color: var(--ink-2); }
-.btn-lg { height: 52px; padding: 0 22px; font-size: 15px; border-radius: var(--radius-lg); }
+.btn-outline { background: transparent; border-color: var(--primary); color: var(--primary); }
+.btn-outline:hover { background: var(--primary); color: white; }
+.btn-outline-dark { background: transparent; border-color: rgba(255,255,255,0.5); color: white; }
+.btn-outline-dark:hover { background: rgba(255,255,255,0.1); }
 .btn:disabled { opacity: .55; cursor: not-allowed; }
 
 /* ── Forms ── */
@@ -173,8 +198,8 @@ button { font-family: inherit; cursor: pointer; }
   width: 100%;
   background: white;
   color: var(--ink);
-  border: 1px solid var(--line-strong);
-  border-radius: var(--radius-md);
+  border: 1px solid var(--ink-3);
+  border-radius: var(--radius-btn);
   padding: 0.625rem 0.875rem;
   font-family: var(--font-sans);
   font-size: 0.9375rem;
@@ -183,7 +208,7 @@ button { font-family: inherit; cursor: pointer; }
   transition: border-color var(--transition-fast), box-shadow var(--transition-fast);
 }
 .input::placeholder { color: var(--ink-3); }
-.input:focus { border-color: var(--primary); box-shadow: 0 0 0 4px rgba(255,107,53,.12); }
+.input:focus { border-color: #40C9D4; box-shadow: 0 0 0 3px rgba(64, 201, 212, 0.15); }
 .input[aria-invalid='true'] { border-color: var(--bad); }
 .label { display: block; font-size: 0.8125rem; font-weight: 500; color: var(--ink); margin-bottom: 0.375rem; }
 .form-error { font-size: 0.8125rem; color: var(--bad); }
@@ -195,5 +220,5 @@ button { font-family: inherit; cursor: pointer; }
 .cap { text-transform: uppercase; letter-spacing: 0.08em; font-size: 11px; font-weight: 600; }
 
 /* ── Heading styles ── */
-.heading-display { font-family: var(--font-display); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
+.heading-display { font-family: var(--font-heading); font-weight: 700; letter-spacing: -0.02em; color: var(--ink); }
 .heading-mono { font-family: var(--font-mono); font-weight: 700; letter-spacing: 0; font-variant-numeric: tabular-nums; }
