@@ -1,7 +1,13 @@
+'use client';
+
 import Link from 'next/link';
+import { usePathname } from 'next/navigation';
 import styles from './Header.module.css';
 
 export function Header() {
+  const pathname = usePathname();
+  const isHomepage = pathname === '/';
+
   return (
     <header className={styles.header} role="banner">
       <div className={styles.inner}>
@@ -15,19 +21,21 @@ export function Header() {
           />
         </Link>
 
-        <nav className={styles.nav} aria-label="Main navigation">
-          <a className={styles.navLink} href="#how">How it works</a>
-          <a className={styles.navLink} href="#engines">AI engines</a>
-          <a className={styles.navLink} href="#sample">Sample report</a>
-          <a
-            className={styles.navLink}
-            href="https://www.campaigncreators.com/blog/topic/seo-aeo-geo"
-            target="_blank"
-            rel="noopener noreferrer"
-          >
-            Resources
-          </a>
-        </nav>
+        {isHomepage && (
+          <nav className={styles.nav} aria-label="Main navigation">
+            <a className={styles.navLink} href="#how">How it works</a>
+            <a className={styles.navLink} href="#engines">AI engines</a>
+            <a className={styles.navLink} href="#sample">Sample report</a>
+            <a
+              className={styles.navLink}
+              href="https://www.campaigncreators.com/blog/topic/seo-aeo-geo"
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Resources
+            </a>
+          </nav>
+        )}
 
         <div className={styles.ctas}>
           <a
