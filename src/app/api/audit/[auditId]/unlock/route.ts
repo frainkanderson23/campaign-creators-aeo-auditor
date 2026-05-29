@@ -1,6 +1,7 @@
 import { NextResponse, type NextRequest } from 'next/server';
 import { createClient } from '@supabase/supabase-js';
 import { z } from 'zod';
+import { syncAeoLead, type AeoLeadPayload } from '@/lib/hubspot';
 
 export const runtime = 'nodejs';
 export const dynamic = 'force-dynamic';
@@ -17,6 +18,33 @@ const unlockSchema = z.object({
   name: z.string().trim().min(1).max(100),
   email: z.string().trim().toLowerCase().max(254).email(),
 });
+
+// Engine display names for HubSpot properties
+const ENGINE_NAMES: Record<string, string> = {
+  claude: 'Claude',
+  openai: 'ChatGPT',
+  perplexity: 'Perplexity',
+  google: 'Google AI',
+};
+
+// Identify the lowest-scoring dimension
+function findTopWeakness(result: {
+  answerability_score: number | null;
+  structure_score: number | null;
+  trust_score: number | null;
+  freshness_score: number | null;
+  brevity_score: number | null;
+}): string {
+  const dimensions: Array<{ name: string; score: number }> = [
+    { name: 'AI Crawlability', score: result.answerability_score ?? 0 },
+    { name: 'Content Structure', score: result.structure_score ?? 0 },
+    { name: 'Authority & Trust', score: result.trust_score ?? 0 },
+    { name: 'Freshness', score: result.freshness_score ?? 0 },
+    { name: 'Schema Markup', score: result.brevity_score ?? 0 },
+  ];
+  dimensions.sort((a, b) => a.score - b.score);
+  return dimensions[0]?.name ?? 'Unknown';
+}
 
 export async function POST(
   request: NextRequest,
@@ -42,9 +70,10 @@ export async function POST(
   const { name, email } = parsed.data;
   const supabase = getSupabase();
 
+  // Fetch audit request + results in one go
   const { data: audit } = await supabase
     .from('audit_requests')
-    .select('id')
+    .select('id, url, created_at')
     .eq('id', auditId)
     .maybeSingle();
 
@@ -52,6 +81,28 @@ export async function POST(
     return NextResponse.json({ error: 'Audit not found' }, { status: 404 });
   }
 
+  const { data: result } = await supabase
+    .from('audit_results')
+    .select('*')
+    .eq('audit_request_id', auditId)
+    .maybeSingle();
+
+  // ── 1. Save lead to Supabase ──────────────────────────────────────────
+  try {
+    await supabase.from('leads').upsert(
+      {
+        audit_request_id: auditId,
+        email,
+        name,
+      },
+      { onConflict: 'email,audit_request_id' },
+    );
+  } catch (err) {
+    console.error('[unlock] Failed to save lead to Supabase:', err);
+    // Non-blocking — continue to unlock even if DB write fails
+  }
+
+  // Touch the audit_requests updated_at
   try {
     await supabase
       .from('audit_requests')
@@ -62,6 +113,70 @@ export async function POST(
   }
 
   console.log('LEAD_CAPTURED:', JSON.stringify({ auditId, name, email }));
+
+  // ── 2. Sync to HubSpot (async, non-blocking) ─────────────────────────
+  // Fire-and-forget so the user isn't waiting on HubSpot
+  const appUrl = (process.env.NEXT_PUBLIC_APP_URL ?? 'https://aeo.campaigncreators.com').replace(/\/$/, '');
+
+  if (result) {
+    const rawFindings = result.raw_findings as {
+      aiProbe?: {
+        claude?: { citedCount?: number; totalPrompts?: number } | null;
+        openai?: { citedCount?: number; totalPrompts?: number } | null;
+        perplexity?: { citedCount?: number; totalPrompts?: number } | null;
+        google?: { citedCount?: number; totalPrompts?: number } | null;
+      } | null;
+    } | null;
+
+    // Determine which engines cited / missed
+    const enginesCited: string[] = [];
+    const enginesMissing: string[] = [];
+    let totalCited = 0;
+    let totalPrompts = 0;
+
+    if (rawFindings?.aiProbe) {
+      for (const [key, displayName] of Object.entries(ENGINE_NAMES)) {
+        const engine = rawFindings.aiProbe[key as keyof typeof rawFindings.aiProbe];
+        if (engine && typeof engine.totalPrompts === 'number' && engine.totalPrompts > 0) {
+          totalCited += engine.citedCount ?? 0;
+          totalPrompts += engine.totalPrompts;
+          if ((engine.citedCount ?? 0) > 0) {
+            enginesCited.push(displayName);
+          } else {
+            enginesMissing.push(displayName);
+          }
+        } else {
+          enginesMissing.push(displayName);
+        }
+      }
+    }
+
+    const payload: AeoLeadPayload = {
+      fullName: name,
+      email,
+      auditedDomain: audit.url,
+      auditReportUrl: `${appUrl}/audit/${auditId}`,
+      overallScore: result.overall_score ?? 0,
+      overallGrade: result.overall_grade ?? 'F',
+      answerabilityScore: result.answerability_score ?? 0,
+      structureScore: result.structure_score ?? 0,
+      trustScore: result.trust_score ?? 0,
+      freshnessScore: result.freshness_score ?? 0,
+      schemaScore: result.brevity_score ?? 0,
+      enginesCited,
+      enginesMissing,
+      citationRate: `${totalCited}/${totalPrompts}`,
+      topWeakness: findTopWeakness(result),
+      auditDate: audit.created_at,
+    };
+
+    // Fire-and-forget
+    syncAeoLead(payload).catch((err) => {
+      console.error('[unlock] HubSpot sync failed:', err);
+    });
+  } else {
+    console.warn('[unlock] No audit results found for HubSpot sync — audit may still be processing');
+  }
 
   return NextResponse.json({ success: true });
 }
