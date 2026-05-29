@@ -264,7 +264,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   };
 
   const handleDownload = () => {
-    window.print();
+    window.open(`/audit/${requestData.id}/pdf`, '_blank');
   };
 
   const dims = [
