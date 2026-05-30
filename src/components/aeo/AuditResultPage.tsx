@@ -823,6 +823,9 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
           )}
         </div>
 
+        {/* Custom Prompts + Competitor Leaderboard — side-by-side */}
+        <div className={styles.probeCompRow}>
+          <div className={styles.probeCompLeft}>
         {/* Custom Prompts Section */}
         <div className={styles.customPromptsSection}>
           <div className={styles.customPromptsAccent} />
@@ -966,64 +969,40 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
           })()}
         </div>
 
-        {/* Competitor Leaderboard */}
-        {topCompetitors.length > 0 && (
-          <div className={styles.compCard}>
-            <p className={styles.compEyebrow}>Competitive intelligence</p>
-            <h2 className={styles.compHeading}>Who&apos;s winning your AI traffic</h2>
-            <p className={styles.compSub}>
-              These brands appeared most in AI responses to <strong>{totalAiPrompts}</strong> prompts about your industry. They&apos;re being recommended where you&apos;re not.
-            </p>
+          </div>{/* end probeCompLeft */}
 
-            <div className={styles.compHeaderRow}>
-              <span className={styles.compHeaderLabel}>#</span>
-              <span className={styles.compHeaderLabel}>Brand</span>
-              <span className={styles.compHeaderLabel}>Citations</span>
-              <span className={styles.compHeaderLabel} style={{ textAlign: 'right' }}>Rate</span>
-            </div>
+          {/* Competitor Leaderboard — compact */}
+          {topCompetitors.length > 0 && (
+            <div className={styles.probeCompRight}>
+              <div className={styles.compCard}>
+                <p className={styles.compEyebrow}>Competitive intelligence</p>
+                <h3 className={styles.compHeadingSm}>Brands AI recommends instead</h3>
 
-            <div className={styles.compList}>
-              {topCompetitors.map((comp, i) => (
-                <div key={comp.domain} className={styles.compRow}>
-                  <span className={`${styles.compRank} ${i < 3 ? styles.compRankTop : ''}`}>{i + 1}</span>
-                  <div className={styles.compNameCol}>
-                    <span className={styles.compName}>{comp.name}</span>
-                    <span className={styles.compDomain}>{comp.domain}</span>
+                <div className={styles.compListSm}>
+                  {topCompetitors.map((comp, i) => (
+                    <div key={comp.domain} className={styles.compRowSm}>
+                      <span className={`${styles.compRank} ${i < 3 ? styles.compRankTop : ''}`}>{i + 1}</span>
+                      <div className={styles.compNameCol}>
+                        <span className={styles.compName}>{comp.name}</span>
+                        <span className={styles.compDomain}>{comp.domain}</span>
+                      </div>
+                    </div>
+                  ))}
+
+                  <div className={styles.compDivider} />
+
+                  <div className={`${styles.compRowSm} ${styles.compRowYou}`}>
+                    <span className={styles.compRankYou}>—</span>
+                    <div className={styles.compNameCol}>
+                      <span className={styles.compNameYou}>{userDomain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
+                      <span className={styles.compDomainYou}>{userDomain}</span>
+                    </div>
                   </div>
-                  <div className={styles.compBarCol}>
-                    <div
-                      className={styles.compBarFill}
-                      style={{ width: `${totalAiPrompts > 0 ? (comp.count / totalAiPrompts) * 100 : 0}%` }}
-                    />
-                  </div>
-                  <span className={styles.compCiteCount}>{comp.count}/{totalAiPrompts}</span>
                 </div>
-              ))}
-
-              <div className={styles.compDivider} />
-
-              <div className={`${styles.compRow} ${styles.compRowYou}`}>
-                <span className={styles.compRankYou}>—</span>
-                <div className={styles.compNameCol}>
-                  <span className={styles.compNameYou}>{userDomain.split('.')[0].replace(/-/g, ' ').replace(/\b\w/g, c => c.toUpperCase())}</span>
-                  <span className={styles.compDomainYou}>{userDomain}</span>
-                </div>
-                <div className={styles.compBarCol}>
-                  <div className={styles.compBarFillYou} style={{ width: `${totalAiPrompts > 0 ? (totalAiCited / totalAiPrompts) * 100 : 0}%` }} />
-                </div>
-                <span className={styles.compCiteCountYou}>{totalAiCited}/{totalAiPrompts}</span>
               </div>
             </div>
-
-            <div className={styles.compInsight}>
-              <span className={styles.compInsightText}>
-                <strong>{topCompetitors.length} competitor{topCompetitors.length !== 1 ? 's' : ''}</strong> {topCompetitors.length !== 1 ? 'are' : 'is'} being recommended by AI engines in your space.
-                {topCompetitors[0] && <> {topCompetitors[0].name} alone appeared in <strong>{totalAiPrompts > 0 ? Math.round((topCompetitors[0].count / totalAiPrompts) * 100) : 0}%</strong> of the prompts your buyers are asking.</>}
-                {' '}Your brand appeared in <strong>{totalAiCited === 0 ? 'none' : `${totalAiCited}`}</strong>.
-              </span>
-            </div>
-          </div>
-        )}
+          )}
+        </div>{/* end probeCompRow */}
 
         {/* 90-day Action Plan */}
         <div className={styles.reportCard} style={{ marginTop: 24 }}>

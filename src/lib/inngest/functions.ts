@@ -279,7 +279,7 @@ ${siteContext}
 Return ONLY a JSON object with:
 1. "companyName": the company/brand name (e.g. "SmartBug Media", "Campaign Creators")
 2. "industry": a 2-4 word industry description (e.g. "HubSpot marketing agency", "B2B SaaS consulting", "ecommerce platform")
-3. "prompts": an array of exactly 6 questions that a potential customer would type into ChatGPT when looking for this type of company. Make them natural, specific to the industry, and varied. Examples of good prompts:
+3. "prompts": an array of exactly 10 questions that a potential customer would type into ChatGPT when looking for this type of company. Make them natural, specific to the industry, and varied. Examples of good prompts:
    - "What are the best HubSpot partner agencies for enterprise companies?"
    - "Which marketing agencies specialize in B2B lead generation?"
    - "Who are the top inbound marketing consultants in 2026?"
@@ -295,7 +295,7 @@ Return valid JSON only, no markdown fences.`,
     return {
       companyName: parsed.companyName || domain.replace(/^www\./, '').split('.')[0],
       industry: parsed.industry || 'digital services',
-      prompts: Array.isArray(parsed.prompts) ? parsed.prompts.slice(0, 6) : [],
+      prompts: Array.isArray(parsed.prompts) ? parsed.prompts.slice(0, 10) : [],
     };
   } catch {
     return {
@@ -304,6 +304,14 @@ Return valid JSON only, no markdown fences.`,
       prompts: [
         `What are the best companies in the ${domain} industry?`,
         `Which agencies would you recommend for businesses like ${domain}?`,
+        `Who are the top providers competing with ${domain}?`,
+        `What are the leading alternatives to ${domain}?`,
+        `Compare top providers similar to ${domain} for enterprise customers`,
+        `Which companies offer services like ${domain}?`,
+        `What are the most reputable alternatives to ${domain}?`,
+        `Who are the emerging leaders alongside ${domain}?`,
+        `What should I look for when choosing a provider like ${domain}?`,
+        `Best solutions in the same category as ${domain}`,
       ],
     };
   }

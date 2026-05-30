@@ -30,6 +30,10 @@ function generatePrompts(
     `Compare the leading ${industry} agencies for enterprise businesses`,
     `Which ${industry} agency would you recommend for a mid-size B2B company?`,
     `What are the most reputable companies for ${services[2] || services[0] || industry}?`,
+    `What ${industry} tools or platforms do experts recommend?`,
+    `Who are the emerging leaders in ${services[0] || industry}?`,
+    `What should I look for when choosing a ${industry} partner?`,
+    `Best ${services[1] || services[0] || industry} solutions for growing companies`,
   ];
 }
 
