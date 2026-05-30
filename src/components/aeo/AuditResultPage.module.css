@@ -664,10 +664,14 @@
 
 .probeCompLeft {
   min-width: 0;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 .probeCompRight {
   min-width: 0;
+  margin-top: 0;
+  padding-top: 0;
 }
 
 /* ─── Competitor Leaderboard ─────────────────────────────── */
@@ -1156,7 +1160,7 @@
   border-radius: 8px;
   box-shadow: var(--shadow-card);
   padding: 28px;
-  margin-top: 24px;
+  margin-top: 0;
 }
 
 .customPromptsAccent {
