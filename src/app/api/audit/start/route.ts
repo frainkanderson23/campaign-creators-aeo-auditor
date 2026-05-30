@@ -34,6 +34,11 @@ const startSchema = z.object({
       },
       { message: 'URL must use http or https protocol' },
     ),
+  utm_source: z.string().optional(),
+  utm_medium: z.string().optional(),
+  utm_campaign: z.string().optional(),
+  utm_content: z.string().optional(),
+  utm_term: z.string().optional(),
 });
 
 const IPV4_RE = /^(\d{1,3}\.){3}\d{1,3}$/;
@@ -155,6 +160,11 @@ export async function POST(request: NextRequest): Promise<Response> {
           status: 'pending',
           ip_address: ip,
           created_at: new Date().toISOString(),
+          utm_source: parsed.data.utm_source || null,
+          utm_medium: parsed.data.utm_medium || null,
+          utm_campaign: parsed.data.utm_campaign || null,
+          utm_content: parsed.data.utm_content || null,
+          utm_term: parsed.data.utm_term || null,
         })
         .select('id')
         .single();
