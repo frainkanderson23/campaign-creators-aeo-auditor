@@ -102,4 +102,11 @@
 
 @media (max-width: 480px) {
   .ctaGhost { display: none; }
+  .ctaPrimary {
+    padding: 10px 16px;
+    font-size: 14px;
+  }
+  .logoImg {
+    height: 28px;
+  }
 }

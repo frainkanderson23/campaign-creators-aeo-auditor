@@ -52,6 +52,16 @@
 
 @media (max-width: 640px) {
   .heroInner { padding: 0 20px; }
+  .heading {
+    font-size: 28px;
+  }
+  .subtitle {
+    font-size: 15px;
+  }
+  .trustRow {
+    flex-direction: column;
+    gap: 8px;
+  }
 }
 
 /* Eyebrow */
@@ -675,4 +685,16 @@
   .ctaCard { padding: 32px 24px; }
   .ctaHeading { font-size: 24px; }
   .ctaBtnPrimary, .ctaBtnOutline { width: 100%; justify-content: center; }
+  .pipeStage {
+    padding: 16px 14px;
+  }
+  .pipeStage h4 {
+    font-size: 13px;
+  }
+}
+
+@media (max-width: 480px) {
+  .ctaBtns {
+    flex-direction: column;
+  }
 }

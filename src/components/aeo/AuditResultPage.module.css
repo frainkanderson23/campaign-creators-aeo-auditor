@@ -1426,7 +1426,7 @@
   }
 
   .scoreNum {
-    font-size: 56px;
+    font-size: 44px;
   }
 
   .scoreSummary h2 {
@@ -1449,5 +1449,97 @@
   .promptRow {
     flex-direction: column;
     align-items: flex-start;
+  }
+}
+
+/* ─── Mobile tightening — score hero + CTA pill + tabs + grids ──── */
+@media (max-width: 640px) {
+  .scoreHero {
+    padding: 24px 20px;
+    gap: 20px;
+  }
+  .scoreRing {
+    width: 140px;
+    height: 140px;
+  }
+  .heroCtaBtn {
+    font-size: 13px;
+    padding: 10px 20px;
+  }
+  .impactGrid {
+    grid-template-columns: 1fr 1fr;
+    gap: 8px;
+  }
+  .impactNum {
+    font-size: 18px;
+  }
+  .impactLabel {
+    font-size: 10px;
+  }
+  .heroSources {
+    flex-direction: column;
+    gap: 4px;
+  }
+  .heroSourceDot {
+    display: none;
+  }
+
+  /* Bottom CTA — score pill + heading + buttons */
+  .ctaScorePill {
+    flex-direction: column;
+    gap: 6px;
+  }
+  .ctaScoreMeta {
+    font-size: 12px;
+    text-align: center;
+  }
+  .ctaHeading {
+    font-size: 22px;
+  }
+  .ctaSubtext {
+    font-size: 14px;
+  }
+  .ctaBtnPrimary {
+    width: 100%;
+    justify-content: center;
+  }
+  .ctaBlogRow {
+    font-size: 12px;
+  }
+
+  /* Cross-engine probe tabs — horizontal scroll instead of overflow wrap */
+  .engineTabs {
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+  }
+  .engineTabs::-webkit-scrollbar {
+    display: none;
+  }
+
+  /* Engine results grid */
+  .engines {
+    grid-template-columns: 1fr 1fr;
+  }
+  .engineResult {
+    padding: 12px;
+  }
+
+  /* Custom prompts + competitor card padding */
+  .customPromptsSection {
+    padding: 20px 16px;
+  }
+  .compCard {
+    padding: 20px 16px;
+  }
+  .compHeadingSm {
+    font-size: 14px;
+  }
+}
+
+@media (max-width: 480px) {
+  .dimRow {
+    grid-template-columns: 100px 1fr 36px;
+    font-size: 13px;
   }
 }
