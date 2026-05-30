@@ -16,7 +16,7 @@ export function ScrollTopButton({ children, className }: Props) {
     <button
       type="button"
       className={className}
-      onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })}
+      onClick={() => document.getElementById('audit-url')?.scrollIntoView({ behavior: 'smooth', block: 'center' })}
     >
       {children}
     </button>
