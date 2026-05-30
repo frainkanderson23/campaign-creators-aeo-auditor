@@ -278,6 +278,17 @@
 
 @media (max-width: 960px) {
   .pipeStage + .pipeStage::before { display: none; }
+  .pipeStage {
+    text-align: center;
+    align-items: center;
+  }
+  .pipeIcon {
+    margin-left: auto;
+    margin-right: auto;
+  }
+  .pipeNum {
+    text-align: center;
+  }
 }
 
 .pipeNum {
