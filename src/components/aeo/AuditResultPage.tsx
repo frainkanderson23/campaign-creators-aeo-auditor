@@ -412,6 +412,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   }
 
   const topCompetitors = Array.from(competitorMap.entries())
+    .filter(([, count]) => count >= 3)
     .sort((a, b) => b[1] - a[1])
     .slice(0, 5)
     .map(([domain, count]) => ({
@@ -965,27 +966,6 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
           })()}
         </div>
 
-        {/* 90-day Action Plan */}
-        <div className={styles.reportCard} style={{ marginTop: 24 }}>
-          <h3 className={styles.cardTitle}>Your 90-day action plan</h3>
-          <div className={styles.recs}>
-            {recs.map((rec, i) => (
-              <div key={i} className={styles.rec}>
-                <div className={styles.recNum}>{i + 1}</div>
-                <div>
-                  <div className={styles.recTitle}>{rec.title}</div>
-                  <div className={styles.recDesc}>{rec.desc}</div>
-                </div>
-                <span className={`${styles.recPriority} ${
-                  rec.priority === 'high' ? styles.recPriorityHigh :
-                  rec.priority === 'medium' ? styles.recPriorityMed :
-                  styles.recPriorityLow
-                }`}>{rec.priority}</span>
-              </div>
-            ))}
-          </div>
-        </div>
-
         {/* Competitor Leaderboard */}
         {topCompetitors.length > 0 && (
           <div className={styles.compCard}>
@@ -1044,6 +1024,27 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
             </div>
           </div>
         )}
+
+        {/* 90-day Action Plan */}
+        <div className={styles.reportCard} style={{ marginTop: 24 }}>
+          <h3 className={styles.cardTitle}>Your 90-day action plan</h3>
+          <div className={styles.recs}>
+            {recs.map((rec, i) => (
+              <div key={i} className={styles.rec}>
+                <div className={styles.recNum}>{i + 1}</div>
+                <div>
+                  <div className={styles.recTitle}>{rec.title}</div>
+                  <div className={styles.recDesc}>{rec.desc}</div>
+                </div>
+                <span className={`${styles.recPriority} ${
+                  rec.priority === 'high' ? styles.recPriorityHigh :
+                  rec.priority === 'medium' ? styles.recPriorityMed :
+                  styles.recPriorityLow
+                }`}>{rec.priority}</span>
+              </div>
+            ))}
+          </div>
+        </div>
 
         {/* CTA Card */}
         <div className={styles.ctaCard}>
