@@ -652,6 +652,215 @@
 }
 
 /* ─── CTA Card ──────────────────────────────────────────── */
+/* ─── Competitor Leaderboard ─────────────────────────────── */
+.compCard {
+  background: var(--color-dark-navy);
+  border-radius: var(--radius-card);
+  padding: 32px 36px;
+  margin-bottom: 24px;
+  position: relative;
+  overflow: hidden;
+}
+
+.compCard::before {
+  content: '';
+  position: absolute;
+  top: -40%;
+  right: -10%;
+  width: 350px;
+  height: 350px;
+  background: radial-gradient(circle, rgba(53,255,216,0.04) 0%, transparent 70%);
+  pointer-events: none;
+}
+
+.compEyebrow {
+  font-size: 11px;
+  font-weight: 600;
+  letter-spacing: 0.1em;
+  text-transform: uppercase;
+  color: var(--color-accent);
+  margin: 0 0 8px;
+}
+
+.compHeading {
+  font-size: 21px;
+  font-weight: 700;
+  color: #fff;
+  letter-spacing: -0.02em;
+  line-height: 1.3;
+  margin: 0 0 4px;
+}
+
+.compSub {
+  font-size: 13px;
+  color: rgba(255,255,255,0.55);
+  margin: 0 0 24px;
+  line-height: 1.5;
+}
+
+.compSub strong {
+  color: rgba(255,255,255,0.8);
+  font-weight: 600;
+}
+
+.compHeaderRow {
+  display: grid;
+  grid-template-columns: 28px 1fr 80px 60px;
+  gap: 12px;
+  padding: 0 14px 6px;
+  margin: 0 0 4px;
+}
+
+.compHeaderLabel {
+  font-size: 11px;
+  color: rgba(255,255,255,0.3);
+  font-weight: 400;
+}
+
+.compList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin: 0 0 20px;
+}
+
+.compRow {
+  display: grid;
+  grid-template-columns: 28px 1fr 80px 60px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: rgba(255,255,255,0.04);
+  border: 1px solid rgba(255,255,255,0.06);
+  border-radius: 8px;
+}
+
+.compRank {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.35);
+  text-align: center;
+}
+
+.compRankTop {
+  color: var(--color-accent);
+}
+
+.compNameCol {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+}
+
+.compName {
+  font-size: 14px;
+  font-weight: 500;
+  color: #fff;
+}
+
+.compDomain {
+  font-size: 11px;
+  color: rgba(255,255,255,0.4);
+}
+
+.compBarCol {
+  position: relative;
+  height: 6px;
+  background: rgba(255,255,255,0.08);
+  border-radius: 3px;
+  overflow: hidden;
+}
+
+.compBarFill {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: var(--color-accent);
+}
+
+.compCiteCount {
+  font-size: 13px;
+  font-weight: 500;
+  color: rgba(255,255,255,0.7);
+  text-align: right;
+}
+
+.compDivider {
+  height: 1px;
+  background: rgba(255,255,255,0.08);
+  margin: 4px 0;
+}
+
+.compRowYou {
+  border: 1.5px solid rgba(239,68,68,0.4);
+  background: rgba(239,68,68,0.06);
+}
+
+.compRankYou {
+  font-size: 13px;
+  font-weight: 500;
+  color: #EF4444;
+  text-align: center;
+}
+
+.compNameYou {
+  font-size: 14px;
+  font-weight: 500;
+  color: #EF4444;
+}
+
+.compDomainYou {
+  font-size: 11px;
+  color: rgba(239,68,68,0.6);
+}
+
+.compBarFillYou {
+  position: absolute;
+  left: 0;
+  top: 0;
+  height: 100%;
+  border-radius: 3px;
+  background: #EF4444;
+}
+
+.compCiteCountYou {
+  font-size: 13px;
+  font-weight: 500;
+  color: #EF4444;
+  text-align: right;
+}
+
+.compInsight {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 14px 16px;
+  background: rgba(239,68,68,0.06);
+  border: 1px solid rgba(239,68,68,0.15);
+  border-radius: 8px;
+}
+
+.compInsightText {
+  font-size: 13px;
+  color: rgba(255,255,255,0.65);
+  line-height: 1.5;
+}
+
+.compInsightText strong {
+  color: #fff;
+  font-weight: 600;
+}
+
+@media (max-width: 960px) {
+  .compHeaderRow,
+  .compRow {
+    grid-template-columns: 24px 1fr 60px 50px;
+    gap: 8px;
+  }
+}
+
 .ctaCard {
   background: var(--color-dark-navy);
   border-radius: var(--radius-card);
