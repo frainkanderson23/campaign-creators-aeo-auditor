@@ -658,6 +658,7 @@
   grid-template-columns: 2fr 1fr;
   gap: 24px;
   align-items: stretch;
+  margin-top: 24px;
   margin-bottom: 24px;
 }
 
