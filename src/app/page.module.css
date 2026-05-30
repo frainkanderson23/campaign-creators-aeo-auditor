@@ -343,11 +343,12 @@
   width: 40px;
   height: 40px;
   border-radius: var(--radius-md);
-  display: grid;
-  place-items: center;
+  display: flex;
+  align-items: center;
+  justify-content: center;
   font-weight: 700;
   font-size: 14px;
-  color: white;
+  color: #fff;
   flex-shrink: 0;
 }
 

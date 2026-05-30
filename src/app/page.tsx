@@ -1,4 +1,5 @@
 import { AuditForm } from '@/components/aeo/AuditForm';
+import { OpenAIIcon, PerplexityIcon, GoogleAIIcon, ClaudeIcon } from '@/components/aeo/EngineIcons';
 import styles from './page.module.css';
 
 const PIPELINE_STAGES = [
@@ -30,11 +31,11 @@ const PIPELINE_STAGES = [
 ] as const;
 
 const AI_ENGINES = [
-  { bg: '#10A37F', label: 'GPT', name: 'ChatGPT (GPT-4o)', desc: 'The most popular AI assistant. If your customers ask ChatGPT for recommendations, will they hear about you?' },
-  { bg: '#20808D', label: 'P', name: 'Perplexity', desc: 'The AI-native search engine. Perplexity answers questions with source citations — is your site one of them?' },
-  { bg: '#4285F4', label: 'G', name: 'Google AI Overviews', desc: "Google's AI summaries appear above traditional search results. Missing here means missing where it matters most." },
-  { bg: '#D97757', label: 'C', name: 'Claude', desc: "Anthropic's AI assistant is increasingly used for research and business decisions. Are you part of the conversation?" },
-] as const;
+  { bg: '#10A37F', icon: <OpenAIIcon size={24} />, name: 'ChatGPT (GPT-4o)', desc: 'The most popular AI assistant. If your customers ask ChatGPT for recommendations, will they hear about you?' },
+  { bg: '#20808D', icon: <PerplexityIcon size={24} />, name: 'Perplexity', desc: 'The AI-native search engine. Perplexity answers questions with source citations — is your site one of them?' },
+  { bg: '#4285F4', icon: <GoogleAIIcon size={24} />, name: 'Google AI Overviews', desc: "Google's AI summaries appear above traditional search results. Missing here means missing where it matters most." },
+  { bg: '#D97757', icon: <ClaudeIcon size={24} />, name: 'Claude', desc: "Anthropic's AI assistant is increasingly used for research and business decisions. Are you part of the conversation?" },
+];
 
 const REPORT_FEATURES = [
   { title: 'AEO Visibility Score', desc: 'A single score from 0–100 measuring how visible your brand is to AI-powered search engines.' },
@@ -159,7 +160,7 @@ export default function Home() {
                   style={{ background: e.bg }}
                   aria-hidden="true"
                 >
-                  {e.label}
+                  {e.icon}
                 </div>
                 <span className={styles.engineName}>{e.name}</span>
                 <p className={styles.engineDesc}>{e.desc}</p>
