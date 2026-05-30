@@ -1,0 +1,627 @@
+/* ──────────────────────────────────────────────────────────────
+ * SampleReport — interactive dashboard mockup
+ * 210px dark-navy nav (cream tabs / teal active) + light gray panel.
+ * Sample data is hardcoded; this is purely visual.
+ * ────────────────────────────────────────────────────────────── */
+
+.dash {
+  display: grid;
+  grid-template-columns: 210px 1fr;
+  border-radius: 12px;
+  min-height: 460px;
+  overflow: hidden;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  box-shadow: 0 12px 40px -16px rgba(12, 34, 55, 0.18);
+  background: #fff;
+}
+
+/* ── Nav (dark navy) ── */
+.nav {
+  background: #0C2237;
+  padding: 18px 0 16px;
+  display: flex;
+  flex-direction: column;
+  gap: 2px;
+}
+
+.navHead {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  padding: 0 20px 16px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.08);
+  margin-bottom: 10px;
+}
+
+.navDot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  background: #35FFD8;
+  flex-shrink: 0;
+}
+
+.navTitle {
+  font-size: 12px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(245, 240, 232, 0.55);
+}
+
+.tab {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  padding: 10px 18px;
+  margin: 0 8px;
+  border-radius: 6px;
+  font-size: 13.5px;
+  font-weight: 500;
+  color: #F5F0E8;
+  background: transparent;
+  cursor: pointer;
+  border-left: 2px solid transparent;
+  transition: background 0.12s ease, color 0.12s ease;
+  user-select: none;
+}
+
+.tab i {
+  font-size: 16px;
+  flex-shrink: 0;
+  width: 16px;
+  text-align: center;
+}
+
+.tab:hover {
+  color: #0C2237;
+  background: #F5F0E8;
+}
+
+.tab:focus-visible {
+  outline: 2px solid #35FFD8;
+  outline-offset: -2px;
+}
+
+.tabActive {
+  color: #0C2237;
+  background: #35FFD8;
+  border-left: 2px solid #35FFD8;
+  font-weight: 600;
+}
+
+.tabActive:hover {
+  color: #0C2237;
+  background: #35FFD8;
+}
+
+/* ── Panel (light gray) ── */
+.panel {
+  background: #f8f9fa;
+  padding: 24px;
+  overflow: auto;
+}
+
+.panelTitle {
+  font-size: 18px;
+  font-weight: 700;
+  letter-spacing: -0.015em;
+  color: #0C2237;
+  margin: 0 0 18px;
+}
+
+/* ── Score panel: ring + meta ── */
+.ringRow {
+  display: flex;
+  align-items: center;
+  gap: 24px;
+  padding: 16px 18px;
+  background: #fff;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  border-radius: 10px;
+  margin-bottom: 14px;
+}
+
+.ringWrap {
+  position: relative;
+  width: 90px;
+  height: 90px;
+  flex-shrink: 0;
+}
+
+.ringInner {
+  position: absolute;
+  inset: 0;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+
+.ringNum {
+  font-size: 26px;
+  font-weight: 700;
+  color: #0C2237;
+  letter-spacing: -0.02em;
+  line-height: 1;
+}
+
+.ringOf {
+  font-size: 11px;
+  color: rgba(12, 34, 55, 0.5);
+  font-weight: 500;
+}
+
+.ringInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+}
+
+.gradeBad {
+  display: inline-flex;
+  align-self: flex-start;
+  padding: 3px 10px;
+  border-radius: 999px;
+  background: rgba(220, 38, 38, 0.1);
+  color: #B91C1C;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.ringText {
+  font-size: 13px;
+  color: #0C2237;
+  line-height: 1.45;
+}
+
+.ringMeta {
+  font-size: 11.5px;
+  color: rgba(12, 34, 55, 0.55);
+}
+
+/* ── Metric row (small KPI cards) ── */
+.metricRow {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 10px;
+  margin-bottom: 14px;
+}
+
+.metric {
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  border-radius: 8px;
+}
+
+.metricLabel {
+  font-size: 10.5px;
+  font-weight: 600;
+  letter-spacing: 0.06em;
+  text-transform: uppercase;
+  color: rgba(12, 34, 55, 0.5);
+  margin: 0 0 4px;
+}
+
+.metricVal {
+  font-size: 20px;
+  font-weight: 700;
+  color: #0C2237;
+  letter-spacing: -0.02em;
+  margin: 0;
+}
+
+.red { color: #DC2626; }
+.amber { color: #B45309; }
+.teal { color: #0F6E56; }
+
+/* ── Insight row ── */
+.insightRow {
+  display: grid;
+  grid-template-columns: repeat(2, 1fr);
+  gap: 10px;
+}
+
+.insight {
+  display: flex;
+  align-items: flex-start;
+  gap: 10px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  border-radius: 8px;
+}
+
+.insight i {
+  font-size: 18px;
+  flex-shrink: 0;
+  margin-top: 1px;
+}
+
+.insightTitle {
+  font-size: 12.5px;
+  font-weight: 700;
+  color: #0C2237;
+  margin: 0 0 2px;
+}
+
+.insightDesc {
+  font-size: 11.5px;
+  color: rgba(12, 34, 55, 0.6);
+  margin: 0;
+  line-height: 1.4;
+}
+
+/* ── Dimensions panel ── */
+.dimList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.dim {
+  display: grid;
+  grid-template-columns: 110px 1fr 40px;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  border-radius: 8px;
+}
+
+.dimName {
+  font-size: 13px;
+  font-weight: 600;
+  color: #0C2237;
+}
+
+.dimBar {
+  height: 6px;
+  background: rgba(12, 34, 55, 0.08);
+  border-radius: 999px;
+  overflow: hidden;
+}
+
+.dimFill {
+  height: 100%;
+  border-radius: 999px;
+}
+
+.dimGood { background: #0F6E56; }
+.dimBad { background: #DC2626; }
+
+.dimScore {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0C2237;
+  text-align: right;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Engines panel ── */
+.engList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.eng {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  border-radius: 8px;
+}
+
+.engLeft {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.engDot {
+  width: 26px;
+  height: 26px;
+  border-radius: 50%;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  color: #fff;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.engName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0C2237;
+}
+
+.engBadge {
+  padding: 4px 10px;
+  border-radius: 999px;
+  font-size: 10.5px;
+  font-weight: 700;
+  letter-spacing: 0.04em;
+  text-transform: uppercase;
+}
+
+.badgeCited {
+  background: rgba(15, 110, 86, 0.12);
+  color: #0F6E56;
+}
+
+.badgePartial {
+  background: rgba(180, 83, 9, 0.12);
+  color: #B45309;
+}
+
+.badgeMissing {
+  background: rgba(220, 38, 38, 0.1);
+  color: #B91C1C;
+}
+
+/* ── Probes panel ── */
+.promptList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-bottom: 12px;
+}
+
+.prompt {
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  border-radius: 8px;
+}
+
+.promptText {
+  font-size: 13px;
+  color: #0C2237;
+  flex: 1;
+  min-width: 0;
+}
+
+/* ── Competitors panel ── */
+.compList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.comp {
+  display: grid;
+  grid-template-columns: 24px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 10px 14px;
+  background: #fff;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  border-radius: 8px;
+}
+
+.compRank {
+  font-size: 13px;
+  font-weight: 700;
+  color: #35FFD8;
+  text-align: center;
+  background: #0C2237;
+  border-radius: 4px;
+  padding: 2px 0;
+}
+
+.compInfo {
+  display: flex;
+  flex-direction: column;
+  gap: 1px;
+  min-width: 0;
+}
+
+.compName {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0C2237;
+}
+
+.compDomain {
+  font-size: 11px;
+  color: rgba(12, 34, 55, 0.5);
+}
+
+.compCount {
+  font-size: 13px;
+  font-weight: 700;
+  color: #0C2237;
+  font-variant-numeric: tabular-nums;
+}
+
+.compDivider {
+  height: 1px;
+  background: rgba(12, 34, 55, 0.08);
+  margin: 4px 0;
+}
+
+.compYou {
+  border-color: rgba(220, 38, 38, 0.35);
+  background: rgba(220, 38, 38, 0.04);
+}
+
+.compRankYou {
+  font-size: 13px;
+  font-weight: 700;
+  color: #DC2626;
+  text-align: center;
+  background: rgba(220, 38, 38, 0.1);
+  border-radius: 4px;
+  padding: 2px 0;
+}
+
+.compNameYou {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #DC2626;
+}
+
+.compDomainYou {
+  font-size: 11px;
+  color: rgba(220, 38, 38, 0.6);
+}
+
+.compCountYou {
+  font-size: 13px;
+  font-weight: 700;
+  color: #DC2626;
+  font-variant-numeric: tabular-nums;
+}
+
+/* ── Action plan panel ── */
+.recList {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.rec {
+  display: grid;
+  grid-template-columns: 28px 1fr auto;
+  align-items: center;
+  gap: 12px;
+  padding: 12px 14px;
+  background: #fff;
+  border: 1px solid rgba(12, 34, 55, 0.08);
+  border-radius: 8px;
+}
+
+.recNum {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: #0C2237;
+  color: #35FFD8;
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.recContent {
+  min-width: 0;
+}
+
+.recTitle {
+  font-size: 13.5px;
+  font-weight: 600;
+  color: #0C2237;
+  margin: 0 0 2px;
+}
+
+.recDesc {
+  font-size: 11.5px;
+  color: rgba(12, 34, 55, 0.6);
+  margin: 0;
+  line-height: 1.4;
+}
+
+.recPri {
+  padding: 3px 10px;
+  border-radius: 999px;
+  font-size: 10px;
+  font-weight: 700;
+  letter-spacing: 0.05em;
+  text-transform: uppercase;
+}
+
+.priHigh {
+  background: rgba(220, 38, 38, 0.1);
+  color: #B91C1C;
+}
+
+.priMed {
+  background: rgba(180, 83, 9, 0.12);
+  color: #B45309;
+}
+
+.priLow {
+  background: rgba(12, 34, 55, 0.06);
+  color: rgba(12, 34, 55, 0.6);
+}
+
+/* ── Responsive: stack at 768px, horizontal-scroll tabs ── */
+@media (max-width: 768px) {
+  .dash {
+    grid-template-columns: 1fr;
+    min-height: 0;
+  }
+
+  .nav {
+    flex-direction: row;
+    overflow-x: auto;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    padding: 12px 8px;
+    gap: 6px;
+  }
+
+  .nav::-webkit-scrollbar {
+    display: none;
+  }
+
+  .navHead {
+    display: none;
+  }
+
+  .tab {
+    margin: 0;
+    padding: 8px 14px;
+    white-space: nowrap;
+    border-left: none;
+    border-bottom: 2px solid transparent;
+    flex-shrink: 0;
+  }
+
+  .tabActive {
+    border-left: none;
+    border-bottom: 2px solid #35FFD8;
+  }
+
+  .panel {
+    padding: 18px 16px;
+  }
+
+  .ringRow {
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 16px;
+  }
+
+  .ringInfo {
+    align-items: flex-start;
+  }
+
+  .metricRow {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .insightRow {
+    grid-template-columns: 1fr;
+  }
+
+  .dim {
+    grid-template-columns: 90px 1fr 36px;
+    gap: 10px;
+  }
+}

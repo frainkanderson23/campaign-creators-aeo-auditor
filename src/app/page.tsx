@@ -1,6 +1,7 @@
 import { AuditForm } from '@/components/aeo/AuditForm';
 import { OpenAIIcon, PerplexityIcon, GoogleAIIcon, ClaudeIcon } from '@/components/aeo/EngineIcons';
 import { ScrollTopButton } from '@/components/aeo/ScrollTopButton';
+import { SampleReport } from '@/components/aeo/SampleReport';
 import styles from './page.module.css';
 
 const PIPELINE_STAGES = [
@@ -37,15 +38,6 @@ const AI_ENGINES = [
   { bg: '#4285F4', icon: <GoogleAIIcon size={24} />, name: 'Google AI Overviews', desc: "Google's AI summaries appear above traditional search results. Missing here means missing where it matters most." },
   { bg: '#D97757', icon: <ClaudeIcon size={24} />, name: 'Claude', desc: "Anthropic's AI assistant is increasingly used for research and business decisions. Are you part of the conversation?" },
 ];
-
-const REPORT_FEATURES = [
-  { title: 'AEO Visibility Score', desc: 'A single score from 0–100 measuring how visible your brand is to AI-powered search engines.' },
-  { title: 'Dimension Breakdown', desc: 'Detailed analysis across 6 dimensions: crawlability, schema markup, authority, topical depth, freshness, and brand mentions.' },
-  { title: 'AI Engine Comparison', desc: 'See exactly which AI engines cite your brand — and which ones cite your competitors instead.' },
-  { title: 'Actionable Recommendations', desc: 'A prioritized 90-day action plan with specific steps to improve your AI visibility.' },
-  { title: 'Real AI Responses', desc: 'See the actual prompts we sent to each AI engine and whether your brand appeared in their answers.' },
-  { title: 'Competitive Intelligence', desc: 'Discover which competitors are getting cited when AI engines answer questions in your industry.' },
-] as const;
 
 const PIPELINE_ICONS: Record<string, React.ReactNode> = {
   '01': (
@@ -186,19 +178,10 @@ export default function Home() {
       <section className={styles.section} id="sample">
         <div className={styles.sectionInner}>
           <div className={styles.sectionTitle}>
-            <h2>What you&apos;ll get</h2>
-            <p>
-              A complete picture of your AI search visibility — and exactly what to do about it.
-            </p>
+            <h2>See what your report looks like</h2>
+            <p>Click through each section to explore a sample AEO audit report.</p>
           </div>
-          <div className={styles.featureGrid}>
-            {REPORT_FEATURES.map((f) => (
-              <div className={styles.featureCard} key={f.title}>
-                <h4 className={styles.featureTitle}>{f.title}</h4>
-                <p className={styles.featureDesc}>{f.desc}</p>
-              </div>
-            ))}
-          </div>
+          <SampleReport />
         </div>
       </section>
 
