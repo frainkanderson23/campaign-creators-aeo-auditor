@@ -287,7 +287,11 @@
     margin-right: auto;
   }
   .pipeNum {
+    position: static;
     text-align: center;
+    margin-bottom: 8px;
+    font-size: 11px;
+    opacity: 0.4;
   }
 }
 
