@@ -59,8 +59,10 @@
     font-size: 15px;
   }
   .trustRow {
-    flex-direction: column;
-    gap: 8px;
+    font-size: 11px;
+    gap: 6px;
+    flex-wrap: nowrap;
+    white-space: nowrap;
   }
 }
 
