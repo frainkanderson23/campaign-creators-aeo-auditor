@@ -645,6 +645,9 @@
   font-weight: 600;
   letter-spacing: 0.5px;
   text-decoration: none;
+  border: none;
+  cursor: pointer;
+  font-family: inherit;
   transition: background 0.15s ease;
 }
 

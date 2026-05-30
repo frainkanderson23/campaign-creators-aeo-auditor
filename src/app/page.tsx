@@ -1,5 +1,6 @@
 import { AuditForm } from '@/components/aeo/AuditForm';
 import { OpenAIIcon, PerplexityIcon, GoogleAIIcon, ClaudeIcon } from '@/components/aeo/EngineIcons';
+import { ScrollTopButton } from '@/components/aeo/ScrollTopButton';
 import styles from './page.module.css';
 
 const PIPELINE_STAGES = [
@@ -214,15 +215,12 @@ export default function Home() {
               keep. The clock is ticking.
             </p>
             <div className={styles.ctaBtns}>
-              <a href="#audit-url" className={styles.ctaBtnPrimary}>
+              <ScrollTopButton className={styles.ctaBtnPrimary}>
                 Audit your site free
                 <svg width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" aria-hidden="true">
                   <path d="M5 12h14"/><path d="m12 5 7 7-7 7"/>
                 </svg>
-              </a>
-              <button className={styles.ctaBtnOutline} type="button">
-                See a sample report
-              </button>
+              </ScrollTopButton>
             </div>
           </div>
         </div>
