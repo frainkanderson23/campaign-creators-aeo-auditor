@@ -325,7 +325,7 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
   };
 
   const handleDownload = () => {
-    window.open(`/audit/${requestData.id}/pdf`, '_blank');
+    window.print();
   };
 
   const handleCustomSubmit = async () => {
