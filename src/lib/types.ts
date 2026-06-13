@@ -1,4 +1,4 @@
-export type CheckId = 'crawlability' | 'schema' | 'content' | 'authority';
+export type CheckId = 'ai_citation' | 'crawlability' | 'schema' | 'content' | 'authority';
 
 export type CheckStatus = 'pending' | 'running' | 'complete' | 'error';
 
@@ -36,13 +36,29 @@ export interface AuditResult {
 }
 
 export const CHECK_LABELS: Record<CheckId, string> = {
+  ai_citation:  'AI Citation Score',
   crawlability: 'AI Crawlability',
-  schema: 'Schema & Structure',
-  content: 'Content Readiness',
-  authority: 'Authority & Trust',
+  schema:       'Schema & Structure',
+  content:      'Content Readiness',
+  authority:    'Authority & Trust',
+};
+
+// Weights for AEO-first overall score:
+//   AI Citation  40% — direct measure of AI engine visibility
+//   Crawlability 20% — foundational access gate
+//   Content      20% — topical depth drives citation likelihood
+//   Schema       10% — structured data helps AI parse answers
+//   Authority    10% — trust signals
+export const CHECK_WEIGHTS: Record<CheckId, number> = {
+  ai_citation:  0.40,
+  crawlability: 0.20,
+  content:      0.20,
+  schema:       0.10,
+  authority:    0.10,
 };
 
 export const CHECK_ORDER: CheckId[] = [
+  'ai_citation',
   'crawlability',
   'schema',
   'content',
