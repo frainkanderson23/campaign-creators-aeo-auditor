@@ -523,8 +523,21 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
                 <div className={styles.scoreOutOf}>/100</div>
               </div>
             </div>
-            <div className={`${styles.scoreGrade} ${resolveGradeClass(auditData.overall_grade)}`}>
-              {resolveGradeLabel(auditData.overall_grade)}
+            <div className={`${styles.scoreGrade} ${
+              (() => {
+                const aiRate = totalAiPrompts > 0 ? totalAiCited / totalAiPrompts : 0;
+                if (aiRate >= 0.75) return styles.scoreGradeGood;
+                if (aiRate >= 0.40 || auditData.overall_score >= 50) return styles.scoreGradeWarn;
+                return styles.scoreGradeBad;
+              })()
+            }`}>
+              {(() => {
+                const aiRate = totalAiPrompts > 0 ? totalAiCited / totalAiPrompts : 0;
+                if (aiRate >= 0.75) return 'Strong';
+                if (aiRate >= 0.40) return 'Needs work';
+                if (!hasAiData && auditData.overall_score >= 50) return 'Needs work';
+                return 'Critical';
+              })()}
             </div>
             <button
               className={styles.heroCtaBtn}
@@ -544,23 +557,32 @@ export default function AuditResultPage({ requestData, auditData }: Props) {
 
           <div className={styles.scoreSummary}>
             <div className={styles.heroEyebrow}>What your score means</div>
-            {target >= 90 ? (
-              <h2>Your brand leads in AI search. Here&apos;s how to stay ahead.</h2>
-            ) : target >= 70 ? (
-              <h2>Your brand has solid AI visibility. Here&apos;s where to push further.</h2>
-            ) : target >= 50 ? (
-              <h2>Your brand has limited AI visibility. Here&apos;s what you&apos;re leaving on the table.</h2>
-            ) : (
-              <h2>Your brand is invisible to AI search. Here&apos;s what that&apos;s costing you.</h2>
-            )}
+            {(() => {
+              const aiRate = totalAiPrompts > 0 ? totalAiCited / totalAiPrompts : 0;
+              if (aiRate >= 0.75) return <h2>Your brand is well-cited by AI engines. Here&apos;s how to stay ahead.</h2>;
+              if (aiRate >= 0.40) return <h2>Your brand appears in some AI answers. Here&apos;s where to push further.</h2>;
+              if (aiRate > 0 && hasAiData) return <h2>Your brand has limited AI citation. Here&apos;s what you&apos;re leaving on the table.</h2>;
+              if (!hasAiData && target >= 70) return <h2>Your brand has solid AI signals. Here&apos;s where to push further.</h2>;
+              if (!hasAiData && target >= 50) return <h2>Your brand has limited AI visibility. Here&apos;s what you&apos;re leaving on the table.</h2>;
+              return <h2>Your brand is invisible to AI search. Here&apos;s what that&apos;s costing you.</h2>;
+            })()}
             <p>
-              {target >= 70
-                ? 'Your brand is well-positioned in AI search. Strengthening citation rates across all engines will compound your advantage.'
-                : target >= 50
-                ? "Your brand appears in some AI answers, but inconsistently. Competitors with stronger signals are capturing the majority of AI-referred traffic."
-                : hasAiData
-                ? `62% of B2B buyers now start research in AI tools. With a score of ${auditData.overall_score}, your competitors are being recommended while your brand is being skipped entirely.`
-                : `62% of B2B buyers now start research in AI tools. With a score of ${auditData.overall_score}, your site's technical signals suggest AI engines are overlooking your brand.`}
+              {(() => {
+                const aiRate = totalAiPrompts > 0 ? totalAiCited / totalAiPrompts : 0;
+                if (aiRate >= 0.75) {
+                  return `Your brand is cited in ${totalAiCited} of ${totalAiPrompts} AI prompts across all engines — strong AI visibility. Focus on technical optimizations to improve structured data and freshness signals.`;
+                }
+                if (aiRate >= 0.40) {
+                  return `Your brand appears in ${totalAiCited} of ${totalAiPrompts} AI prompts, but inconsistently across engines. Competitors with stronger signals are capturing the majority of AI-referred traffic.`;
+                }
+                if (hasAiData && aiRate > 0) {
+                  return `Your brand only appears in ${totalAiCited} of ${totalAiPrompts} AI prompts. 62% of B2B buyers now start research in AI tools — your competitors are being recommended more consistently.`;
+                }
+                if (!hasAiData) {
+                  return `62% of B2B buyers now start research in AI tools. With a score of ${auditData.overall_score}, your site's technical signals suggest AI engines may be overlooking your brand.`;
+                }
+                return `62% of B2B buyers now start research in AI tools. With a score of ${auditData.overall_score}, your competitors are being recommended while your brand is being skipped entirely.`;
+              })()}
             </p>
 
             <div className={styles.impactGrid}>
