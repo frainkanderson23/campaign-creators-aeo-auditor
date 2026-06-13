@@ -4,9 +4,11 @@ import { runCrawlabilityCheck } from '@/lib/auditor/checks/crawlability';
 import { runSchemaCheck } from '@/lib/auditor/checks/schema';
 import { runContentCheck } from '@/lib/auditor/checks/content';
 import { runAuthorityCheck } from '@/lib/auditor/checks/authority';
+import { runAiCitationCheck } from '@/lib/auditor/checks/ai-citation';
 import {
   CHECK_LABELS,
   CHECK_ORDER,
+  CHECK_WEIGHTS,
   scoreToGrade,
   type AuditResult,
   type CheckId,
@@ -34,10 +36,11 @@ export function createAuditRecord(id: string, rawDomain: string): AuditResult {
     status: 'processing',
     createdAt: Date.now(),
     checks: {
+      ai_citation:  emptyCheck('ai_citation'),
       crawlability: emptyCheck('crawlability'),
-      schema: emptyCheck('schema'),
-      content: emptyCheck('content'),
-      authority: emptyCheck('authority'),
+      schema:       emptyCheck('schema'),
+      content:      emptyCheck('content'),
+      authority:    emptyCheck('authority'),
     },
   };
 
@@ -57,10 +60,11 @@ const RUNNERS: Record<
     origin: string,
   ) => Promise<Omit<CheckResult, 'id' | 'label' | 'status'>>
 > = {
+  ai_citation:  runAiCitationCheck,
   crawlability: runCrawlabilityCheck,
-  schema: runSchemaCheck,
-  content: runContentCheck,
-  authority: runAuthorityCheck,
+  schema:       runSchemaCheck,
+  content:      runContentCheck,
+  authority:    runAuthorityCheck,
 };
 
 function updateCheck(auditId: string, id: CheckId, patch: Partial<CheckResult>): void {
@@ -111,9 +115,12 @@ export async function runAudit(auditId: string): Promise<void> {
   const finalRecord = auditStore.get(auditId);
   if (!finalRecord) return;
 
-  const scores = CHECK_ORDER.map((id) => finalRecord.checks[id].score);
+  // AEO-first weighted score: AI Citation 40%, Crawlability 20%,
+  // Content 20%, Schema 10%, Authority 10%
   const overall = Math.round(
-    scores.reduce((a, b) => a + b, 0) / scores.length,
+    CHECK_ORDER.reduce((sum, id) => {
+      return sum + (finalRecord.checks[id].score * (CHECK_WEIGHTS[id] ?? 0));
+    }, 0)
   );
 
   finalRecord.overallScore = overall;
