@@ -226,10 +226,21 @@ export async function probeGoogleAI(
         engine: 'google',
         gl: 'us',
         hl: 'en',
+        num: '10',
+        google_domain: 'google.com',
+        device: 'desktop',
       });
 
       const res = await fetch(`https://serpapi.com/search.json?${params.toString()}`);
+      if (!res.ok) {
+        results.push({ prompt, response: `SerpAPI error ${res.status}`, cited: false, mentionedDomains: [], snippet: null });
+        continue;
+      }
       const data = await res.json();
+      
+      // Log what SerpAPI returned for debugging
+      const hasAiOverview = !!(data.ai_overview || data.answer_box || data.knowledge_graph);
+      console.log(`[Google probe] "${prompt.slice(0, 50)}" — ai_overview: ${!!data.ai_overview}, answer_box: ${!!data.answer_box}, kg: ${!!data.knowledge_graph}`);
 
       let aiText = '';
       let cited = false;
