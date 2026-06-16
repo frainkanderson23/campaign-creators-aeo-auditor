@@ -4,13 +4,11 @@ on:
     types: [opened]
   issue_comment:
     types: [created]
-
 permissions:
   contents: write
   pull-requests: write
   issues: write
   id-token: write
-
 jobs:
   nexus-build:
     if: |
@@ -37,11 +35,12 @@ jobs:
           # Why not just insteadOf? Two earlier attempts — unset extraheader
           # + insteadOf rewrite — kept failing with "Invalid username or
           # token. Password authentication is not supported for Git
-          # operations. fatal: Authentication failed". The insteadOf rule
-          # writes to the HOME .gitconfig, but actions/checkout@v4 uses a
-          # temp HOME during its own config writes; whether my insteadOf
-          # persists into Gate 2's shell is not reliable across GitHub
-          # Actions runner quirks.
+          # operations. fatal: Authentication failed". Imran's repo
+          # accumulated 28+ orphan branches over two attempts at this fix.
+          # The insteadOf rule writes to the HOME .gitconfig, but
+          # actions/checkout@v4 uses a temp HOME during its own config
+          # writes; whether my insteadOf persists into Gate 2's shell is
+          # apparently not reliable across GitHub Actions runner quirks.
           #
           # This approach is idempotent and proven: directly overwrite the
           # extraheader at --local scope (the same scope actions/checkout
@@ -104,9 +103,10 @@ jobs:
           # GATE 2b — recharts peer-dep companion check. recharts imports
           # react-is internally but does not list it in its own dependencies,
           # so npm does not hoist it. Without it, `next build` fails with
-          # "Module not found: Can't resolve 'react-is'". Enforce it here
-          # before the PR is even opened so the FIX cycle sees the error as
-          # "add react-is" rather than as a generic build failure.
+          # "Module not found: Can't resolve 'react-is'". MM and Imran both
+          # shipped broken main branches from this. Enforce it here before
+          # the PR is even opened so the FIX cycle sees the error as "add
+          # react-is" rather than as a generic build failure.
           if grep -q '"recharts"' package.json; then
             if ! grep -q '"react-is"' package.json; then
               echo "::error::GATE 2b FAILED — recharts is in package.json but react-is is missing. recharts requires react-is as a peer dep (but doesn't declare it). Add react-is and @types/react-is to dependencies, then push again. npm install react-is @types/react-is"
@@ -114,6 +114,57 @@ jobs:
             fi
             echo "✓ GATE 2b — recharts + react-is both present"
           fi
+      - name: GATE 3 — verify the project compiles (next build)
+        if: success()
+        env:
+          GH_TOKEN: ${{ github.token }}
+        run: |
+          # The single highest-leverage reliability gate. Nothing else in the
+          # pipeline compiles the Build Agent's code before it merges: GATE 2
+          # only proves dependencies resolve, and GATE 4 (Vercel preview) runs
+          # POST-merge — far too late, and the failure that triggered this whole
+          # verification-architecture effort (duplicate App Router routes that
+          # broke every Vercel build, June 2026) was invisible until Vercel.
+          # Running the real build HERE, in-Action, before the PR is opened,
+          # catches duplicate routes, type errors, missing imports, and bad
+          # JSX the moment they are written — and a non-zero exit blocks the
+          # PR so broken code never reaches main. A failed gate is surfaced to
+          # the webhook as a build failure, which dispatches a FIX cycle with
+          # the compiler output, so the Build Agent self-heals.
+          set -o pipefail
+          ISSUE_NUM=${{ github.event.issue.number }}
+          # GATE 2 already fetched + checked out the claude branch and ran
+          # npm install in this same job. Re-resolve defensively in case the
+          # checkout state changed, but reuse the installed node_modules.
+          CLAUDE_BRANCH=$(gh api "repos/${{ github.repository }}/git/matching-refs/heads/claude%2Fissue-${ISSUE_NUM}-" --jq '.[].ref | sub("refs/heads/"; "")' 2>/dev/null | sort -r | head -1)
+          if [ -z "$CLAUDE_BRANCH" ]; then
+            echo "No claude branch found — the Build Agent did not commit. Skipping build gate."
+            exit 0
+          fi
+          git fetch --quiet origin "$CLAUDE_BRANCH"
+          git checkout --quiet "$CLAUDE_BRANCH"
+          if [ ! -d node_modules ]; then
+            echo "node_modules missing (GATE 2 state not preserved) — reinstalling..."
+            npm install --no-audit --no-fund 2>&1 | tail -20
+          fi
+          # Detect the build script. Every Nexus/Next project defines one; if a
+          # project genuinely has no build (rare/non-web), skip rather than fail.
+          if ! grep -q '"build"' package.json; then
+            echo "No build script in package.json — skipping build gate."
+            exit 0
+          fi
+          echo "Running production build on $CLAUDE_BRANCH..."
+          set +e
+          npm run build 2>&1 | tee /tmp/build.log
+          build_status=${PIPESTATUS[0]}
+          set -e
+          if [ $build_status -ne 0 ]; then
+            echo "::error::GATE 3 FAILED — the project does not compile. The Build Agent's code has a build error (duplicate route, type error, missing import, or bad JSX). The PR will NOT be opened; a FIX cycle will be dispatched with the build output below."
+            echo "--- last 60 build log lines ---"
+            tail -60 /tmp/build.log
+            exit 1
+          fi
+          echo "✓ GATE 3 — project compiles cleanly (npm run build passed)"
       - name: Auto-create PR
         if: success()
         env:
